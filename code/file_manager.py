@@ -12,15 +12,18 @@ genset = sett.general_settings
 # data handling portion, works with an already open file object to file, read, and otherwise work with file contents
 class Data():
     file: typing.TextIO
+
+
     def __init__(self,opened_file: typing.TextIO,format):
         if opened_file is None or opened_file.closed:
             raise ValueError(f"Expected an open file object, got: {opened_file!r}")
         self.file = opened_file
         self.format = format
 
-    def file_write(self,string_to_write):
+    def test_write(self,string_to_write):
         self.file.write(string_to_write)
-        
+
+    # tady přijdou write, read a podobné funkce!
 
 # filesystem portion, manages the file object. Is responsible for its initiation, renaming and closing
 class File(Data):
@@ -121,6 +124,6 @@ class File(Data):
         super().__init__(self.file,format=format)
 
 open_file = File(open_file=False)
-open_file.file_write("test_from_file\n")
+open_file.test_write("test_from_file\n")
 open_file.rename()
-open_file.file_write("ive been renamed")
+open_file.test_write("ive been renamed")
