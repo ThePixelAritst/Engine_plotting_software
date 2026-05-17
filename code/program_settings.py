@@ -4,12 +4,14 @@ class general_settings():
 class data_settings():
     DEFAULT_FORMAT = "txt"
     DEBUG_MODE = True
-    DEBUG_DIRECTORY = "/home/pixel/Documents/coding/Compressed-air-engine-python-part/testing_directory"
+    DEBUG_DIRECTORY = "testing_directory"
+    INVALID_CHARACTERS = r'<>:"/\|?*'
+
 
     
 class graphing_settings():
     # Basic settings
-    GENERATE_GRAPH = False
+    GENERATE_GRAPH = True
     SAVE_FIG = False # Saves the generated graph to file
     ANIMATE = False
 

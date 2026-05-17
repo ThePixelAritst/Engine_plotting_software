@@ -1,12 +1,18 @@
+# library dependancies
 import os
 import time
+import re
+import typing
 from pathlib import Path
+# internal imports
 import program_settings as sett
 datset = sett.data_settings
 genset = sett.general_settings
 
+# data handling portion, works with an already open file object to file, read, and otherwise work with file contents
 class Data():
-    def __init__(self,opened_file,format):
+    file: typing.TextIO
+    def __init__(self,opened_file: typing.TextIO,format):
         if opened_file is None or opened_file.closed:
             raise ValueError(f"Expected an open file object, got: {opened_file!r}")
         self.file = opened_file
@@ -14,39 +20,47 @@ class Data():
 
     def file_write(self,string_to_write):
         self.file.write(string_to_write)
+        
 
+# filesystem portion, manages the file object. Is responsible for its initiation, renaming and closing
+class File(Data):
+    class Functions():
+        def is_valid_filename(filename,folder,format):
+            try:
+                if re.search(r'[<>:"/\\|?*]',filename): # or not str(filename).isascii()
+                    print("Name cannot contain forbidden characters")
+                    raise ValueError()
+                elif Path.exists(os.path.join(folder,f"{filename}.{format}")):
+                    print("Cannot rename, File with same name already exists")
+                    raise ValueError()
+            except ValueError: return False
+            else: return True 
 
-class File(Data):   
     def create_file(self,format=datset.DEFAULT_FORMAT): #creates file
         if self.file_open:
             raise RuntimeError("Cannot create secondary file in one class instance")
         self.file_open = True
         self.file_name = time.strftime("%Y-%m-%d--%a--%H-%M-%S")
         if datset.DEBUG_MODE:
-            self.folder_directory = datset.DEBUG_DIRECTORY
+            folder = datset.DEBUG_DIRECTORY
         else:
-            self.folder_directory = os.path.join(Path(__file__).resolve().parents[1],"data")
+            folder = "data"
+        self.folder_directory = os.path.join(Path(__file__).resolve().parents[1],folder)
         self.format = format
         self.full_path = os.path.join(self.folder_directory,f"{self.file_name}.{self.format}")
-        self.file = open(self.full_path,"a")
+        self.file = open(self.full_path,"x")
 
-
-    def close_file(self):
+    def close_file(self,report_closed=True):
         self.file.close()
         self.file_open = False
+        if report_closed:
+            print(f"File {self.file_name}.{self.format} was closed.")
 
-    def rename_file(self):
-        chosen_name = None
-        os.rename(self.full_path,os.path.join(self.folder_directory,f"{chosen_name}.{self.format}"))
-
-
-    def open_file(self,handover=None):
+    def open_file(self, handover=None):
         if self.file_open:
             raise RuntimeError("Cannot open secondary file in one class instance")
-    
         elif handover:
             self.full_path = handover
-
         else:
             attempt = 0
             while attempt < genset.MAX_WATCHDOG:
@@ -56,33 +70,57 @@ class File(Data):
                         raise ValueError()
                     else:
                         self.full_path = unconfirmed_path
-                        print("Path valid")
                         break
                 except Exception:
                     attempt += 1
                     print(f"\nInvalid or unreadable file. Attempt {attempt}/{genset.MAX_WATCHDOG}")
                 finally:
                     if attempt >= genset.MAX_WATCHDOG:
-                        exit("Watchdog exceeded, terminating program")
-                          
-        self.format = (os.path.basename(self.full_path).split()[-1]).split(".")
-        #self.file_name =    
+                        exit("Watchdog exceeded, terminating program.\n\n")
+
+        full_name = (os.path.basename(self.full_path).split()[-1]).split(".")                
+        self.format = full_name[-1]
+        self.file_name = full_name[0]
         self.folder_directory = Path(self.full_path).resolve().parent
-        self.file = open(self.full_path)
-            
+        self.file = open(self.full_path,"a")
+
+    def rename(self):
+        watchdog = 0
+        old_name = self.file_name
+
+        while watchdog < genset.MAX_WATCHDOG:
+            chosen_name = input("Please input a new name for the file.\n")
+            if self.Functions.is_valid_filename(chosen_name,self.folder_directory,self.format):
+                self.file_name = chosen_name
+                break
+            else:
+                watchdog += 1
+                print(f"\nEncountered error while renaming file. Please try again! Attempt {watchdog}/{genset.MAX_WATCHDOG}")
+                if watchdog >= genset.MAX_WATCHDOG:
+                    exit("\nWatchdog exceeded, terminating program.\n\n")
+
+        self.close_file(report_closed=False)
+        new_file_path = os.path.join(self.folder_directory,f"{chosen_name}.{self.format}")
+        os.rename(self.full_path,new_file_path)
+        self.full_path = new_file_path
+        self.file_name = chosen_name
+        self.open_file(handover=self.full_path)
+        print(f"Renamed '{old_name}.{self.format}' to '{chosen_name}.{self.format}'")         
         
-    def __init__(self,open_file=True,format=datset.DEFAULT_FORMAT,handover=None):
+    def __init__(self,open_file=True,format=datset.DEFAULT_FORMAT):
         self.file_open = False
-        if open_file:
-            self.open_file(handover)
+        if open_file: 
+            self.open_file()
         else:
             self.create_file(format)
         if not hasattr(self, 'file') or self.file is None:
             raise RuntimeError("File not created, cannot initiate Data Class")
-        #print(f"File {self.file_name} initiated successfully")
+        if self.format != datset.DEFAULT_FORMAT:
+            print(f"WARNING: {self.file_name} is encoded in {self.format}, a non standard: {datset.DEFAULT_FORMAT} file.")
+        print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file,format=format)
 
-
-open_file = File(open_file=True)
-print(open_file.format)
-open_file.file_write("test_from_call")
+open_file = File(open_file=False)
+open_file.file_write("test_from_file\n")
+open_file.rename()
+open_file.file_write("ive been renamed")

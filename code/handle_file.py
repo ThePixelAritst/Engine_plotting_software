@@ -74,3 +74,5 @@ class file_handler():
         if processed_check[0] != processed_check[1]:
             Exception("Count does not match. Cannot draw graph")
         return file_path, separated_datafile
+    
+file = file_handler()
