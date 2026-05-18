@@ -34,12 +34,12 @@ class Data():
             raise TypeError(f"Cannot write using 'csv' writer to '{self.format}' file!")
         self.csv_writer.writerow(set_of_values)
     
-    def read_csv(self):
+    def list_csv(self):
+        if self.format != "csv":
+            raise TypeError(f"Cannot write using 'csv' writer to '{self.format}' file!")
         self.file.seek(0)
-        for x in self.csv_reader:
-            print(x)
-
-
+        return list(self.csv_reader)
+    
     # tady přijdou write, read a podobné funkce!
 
 # filesystem portion, manages the file object. Is responsible for its initiation, renaming and closing
@@ -144,4 +144,4 @@ class File(Data):
 open_file = File(open_file=False,format="csv")
 open_file.write_csv(("bleh1","bleh2","bleh3"))
 open_file.write_csv(("10","20","30"))
-open_file.read_csv()
+print(open_file.list_csv())
