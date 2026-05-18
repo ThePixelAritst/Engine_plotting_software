@@ -4,6 +4,7 @@ import time
 import re
 import typing
 from pathlib import Path
+import csv
 # internal imports
 import program_settings as sett
 datset = sett.data_settings
@@ -13,15 +14,31 @@ genset = sett.general_settings
 class Data():
     file: typing.TextIO
 
-
     def __init__(self,opened_file: typing.TextIO,format):
         if opened_file is None or opened_file.closed:
-            raise ValueError(f"Expected an open file object, got: {opened_file!r}")
+            raise ValueError(f"Expected an open file object, got: {opened_file!r}!")
         self.file = opened_file
-        self.format = format
+        self.format = str(format)
+        if self.format == "csv": # tohle není úplně lovely řešení, rozhodně to jde udělat nějak lépe
+            self.csv_writer = csv.writer(self.file)
+            self.csv_reader = csv.reader(self.file, delimiter=' ', quotechar='|')
 
+        elif self.format != "txt":
+            raise ValueError(f"'{self.format} is not a supported file format!'")
+        
     def test_write(self,string_to_write):
         self.file.write(string_to_write)
+
+    def write_csv(self,set_of_values):
+        if self.format != "csv":
+            raise TypeError(f"Cannot write using 'csv' writer to '{self.format}' file!")
+        self.csv_writer.writerow(set_of_values)
+    
+    def read_csv(self):
+        self.file.seek(0)
+        for x in self.csv_reader:
+            print(x)
+
 
     # tady přijdou write, read a podobné funkce!
 
@@ -31,17 +48,18 @@ class File(Data):
         def is_valid_filename(filename,folder,format):
             try:
                 if re.search(r'[<>:"/\\|?*]',filename): # or not str(filename).isascii()
-                    print("Name cannot contain forbidden characters")
+                    print("Name cannot contain forbidden characters'")
                     raise ValueError()
                 elif Path.exists(os.path.join(folder,f"{filename}.{format}")):
-                    print("Cannot rename, File with same name already exists")
+                    print("Cannot rename, File with same name already exists!")
                     raise ValueError()
             except ValueError: return False
             else: return True 
 
+
     def create_file(self,format=datset.DEFAULT_FORMAT): #creates file
         if self.file_open:
-            raise RuntimeError("Cannot create secondary file in one class instance")
+            raise RuntimeError("Cannot create secondary file in one class instance'")
         self.file_open = True
         self.file_name = time.strftime("%Y-%m-%d--%a--%H-%M-%S")
         if datset.DEBUG_MODE:
@@ -51,7 +69,7 @@ class File(Data):
         self.folder_directory = os.path.join(Path(__file__).resolve().parents[1],folder)
         self.format = format
         self.full_path = os.path.join(self.folder_directory,f"{self.file_name}.{self.format}")
-        self.file = open(self.full_path,"x")
+        self.file = open(self.full_path,"x+",newline='')
 
     def close_file(self,report_closed=True):
         self.file.close()
@@ -61,7 +79,7 @@ class File(Data):
 
     def open_file(self, handover=None):
         if self.file_open:
-            raise RuntimeError("Cannot open secondary file in one class instance")
+            raise RuntimeError("Cannot open secondary file in one class instance!")
         elif handover:
             self.full_path = handover
         else:
@@ -85,7 +103,7 @@ class File(Data):
         self.format = full_name[-1]
         self.file_name = full_name[0]
         self.folder_directory = Path(self.full_path).resolve().parent
-        self.file = open(self.full_path,"a")
+        self.file = open(self.full_path,"a+",newline='')
 
     def rename(self):
         watchdog = 0
@@ -119,11 +137,11 @@ class File(Data):
         if not hasattr(self, 'file') or self.file is None:
             raise RuntimeError("File not created, cannot initiate Data Class")
         if self.format != datset.DEFAULT_FORMAT:
-            print(f"WARNING: {self.file_name} is encoded in {self.format}, a non standard: {datset.DEFAULT_FORMAT} file.")
+            print(f"WARNING: {self.file_name} is encoded in {self.format}, a non standard file format!")
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file,format=format)
 
-open_file = File(open_file=False)
-open_file.test_write("test_from_file\n")
-open_file.rename()
-open_file.test_write("ive been renamed")
+open_file = File(open_file=False,format="csv")
+open_file.write_csv(("bleh1","bleh2","bleh3"))
+open_file.write_csv(("10","20","30"))
+open_file.read_csv()
