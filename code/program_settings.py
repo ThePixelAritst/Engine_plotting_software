@@ -1,8 +1,9 @@
 class general_settings():
     MAX_WATCHDOG = 5
     VERSION_SOFTWARE = "2.0"
-    VERSION_PARSER = "B1"
-    
+    VERSION_PARSER = "2.0"
+    VERSION_RECEIVER = "1.1"
+
 
 class data_settings():
     DEFAULT_FORMAT = "txt"

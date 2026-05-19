@@ -41,7 +41,8 @@ class Data():
     def _write_header(self):
         self.write(("#","SOFTWARE",genset.VERSION_SOFTWARE))
         self.write(("#","PARSER",genset.VERSION_PARSER))
-        self.header_length = 2
+        self.write(("#","RECEIVER",genset.VERSION_RECEIVER))
+        self.header_length = 3
 
     def _initialize_csv(self):
             self.csv_writer = csv.writer(self.file)
@@ -164,7 +165,7 @@ class File(Data):
         if not hasattr(self, 'file') or self.file is None:
             raise RuntimeError("File not created, cannot initiate Data Class")
         if self.format != datset.DEFAULT_FORMAT:
-            print(f"WARNING: {self.file_name} is encoded in '{self.format}', a non standard file format!")
+            print(f"WARNING: file '{self.file_name}' is encoded in '{self.format}' format, a non standard file format!")
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file,format=format)
 
