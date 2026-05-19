@@ -14,48 +14,75 @@ genset = sett.general_settings
 class Data():
     file: typing.TextIO
 
+    # --- FUNCTION CALL DISPATCH ---
+    def _initialize_function_dispatch(self):
+        self.writer_set = {"csv": self._write_csv} 
+        self.row_reader_set = {"csv": self._readrow_csv}
+
+    # --- CSV FUNCTIONS ---
+    def _write_csv(self,row_content):
+        self.csv_writer.writerow(row_content)
+
+    def _readrow_csv(self,row_number,include_header):
+        if not include_header:
+            row_number += self.header_length
+        self.file.seek(0)
+        row = list(self.csv_reader)[row_number]
+        return row
+
+    # --- VISIBLE AND ACCESSIBLE METHODS ---
+    def write(self,tuple_of_values):
+        self.writer_set[self.format](tuple_of_values)
+
+    def read_row(self,row_number,include_header=False):
+        return self.row_reader_set[self.format](row_number,include_header)
+    
+    # --- CLASS INITIALIZATION ---
+    def _write_header(self):
+        self.write(("#","SOFTWARE",genset.VERSION_SOFTWARE))
+        self.write(("#","PARSER",genset.VERSION_PARSER))
+        self.header_length = 2
+
+    def _initialize_csv(self):
+            self.csv_writer = csv.writer(self.file)
+            self.csv_reader = csv.reader(self.file, delimiter=' ', quotechar='|')
+    
     def __init__(self,opened_file: typing.TextIO,format):
         if opened_file is None or opened_file.closed:
             raise ValueError(f"Expected an open file object, got: {opened_file!r}!")
         self.file = opened_file
         self.format = str(format)
-        if self.format == "csv": # tohle není úplně lovely řešení, rozhodně to jde udělat nějak lépe
-            self.csv_writer = csv.writer(self.file)
-            self.csv_reader = csv.reader(self.file, delimiter=' ', quotechar='|')
+        self._initialize_function_dispatch()
 
-        elif self.format != "txt":
+        if self.format == "csv": # tohle není úplně lovely řešení, rozhodně to jde udělat nějak lépe
+            self._initialize_csv()
+        elif self.format == "txt":
+            pass
+        else:
             raise ValueError(f"'{self.format} is not a supported file format!'")
         
-    def test_write(self,string_to_write):
-        self.file.write(string_to_write)
+        self._write_header()
 
-    def write_csv(self,set_of_values):
-        if self.format != "csv":
-            raise TypeError(f"Cannot write using 'csv' writer to '{self.format}' file!")
-        self.csv_writer.writerow(set_of_values)
-    
-    def list_csv(self):
-        if self.format != "csv":
-            raise TypeError(f"Cannot write using 'csv' writer to '{self.format}' file!")
-        self.file.seek(0)
-        return list(self.csv_reader)
-    
     # tady přijdou write, read a podobné funkce!
 
-# filesystem portion, manages the file object. Is responsible for its initiation, renaming and closing
-class File(Data):
-    class Functions():
-        def is_valid_filename(filename,folder,format):
-            try:
-                if re.search(r'[<>:"/\\|?*]',filename): # or not str(filename).isascii()
-                    print("Name cannot contain forbidden characters'")
-                    raise ValueError()
-                elif Path.exists(os.path.join(folder,f"{filename}.{format}")):
-                    print("Cannot rename, File with same name already exists!")
-                    raise ValueError()
-            except ValueError: return False
-            else: return True 
 
+# ---- FILE HANDLING ----
+
+# Handles file creating, opening, closing and renaming of a data file.
+# Does not handle the data in the file.
+# Ensures handling of the data inside the file can be done smoothly.
+class File(Data):
+
+    def is_valid_filename(self,filename):
+        try:
+            if re.search(r'[<>:"/\\|?*]',filename): # or not str(filename).isascii()
+                print("Name cannot contain forbidden characters'")
+                raise ValueError()
+            elif Path.exists(os.path.join(self.folder_directory,f"{filename}.{self.format}")):
+                print("Cannot rename, File with same name already exists!")
+                raise ValueError()
+        except ValueError: return False
+        else: return True 
 
     def create_file(self,format=datset.DEFAULT_FORMAT): #creates file
         if self.file_open:
@@ -111,7 +138,7 @@ class File(Data):
 
         while watchdog < genset.MAX_WATCHDOG:
             chosen_name = input("Please input a new name for the file.\n")
-            if self.Functions.is_valid_filename(chosen_name,self.folder_directory,self.format):
+            if self.is_valid_filename(chosen_name,self.folder_directory,self.format):
                 self.file_name = chosen_name
                 break
             else:
@@ -137,11 +164,11 @@ class File(Data):
         if not hasattr(self, 'file') or self.file is None:
             raise RuntimeError("File not created, cannot initiate Data Class")
         if self.format != datset.DEFAULT_FORMAT:
-            print(f"WARNING: {self.file_name} is encoded in {self.format}, a non standard file format!")
+            print(f"WARNING: {self.file_name} is encoded in '{self.format}', a non standard file format!")
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file,format=format)
 
 open_file = File(open_file=False,format="csv")
-open_file.write_csv(("bleh1","bleh2","bleh3"))
-open_file.write_csv(("10","20","30"))
-print(open_file.list_csv())
+open_file.write(("bleh1","bleh2","bleh3"))
+open_file.write(("10","20","30"))
+print(open_file.read_row(0))

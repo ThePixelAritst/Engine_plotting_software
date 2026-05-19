@@ -1,6 +1,25 @@
-from file_manager import File
+class outer():
+    formatting = 2
+    file = "dont mind me, just passing through"
 
+    class inner_1():
+        def write_as_1(custom):
+            print("not stinky")
+            print(outer.file)
+            print(custom)
 
-open_file = File(open_file=True)
+    class inner_2():
+        def write_as_2(custom=None):
+            print("stinky")
+            print(outer.file)
+            print(custom)
 
-open_file.file_write("test_from_call")
+    def write(self,custom_text):
+        available_calls = {1: self.inner_1.write_as_1,
+                     2: self.inner_2.write_as_2}
+        
+        available_calls[self.formatting](custom_text)
+
+bleh = outer()
+
+bleh.write("does he even see me")
