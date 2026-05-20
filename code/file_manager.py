@@ -5,6 +5,7 @@ import re
 import typing
 from pathlib import Path
 import csv
+import ast
 # internal imports
 import program_settings as sett
 datset = sett.data_settings
@@ -17,7 +18,8 @@ class Data():
     # --- FUNCTION CALL DISPATCH ---
     def _initialize_function_dispatch(self):
         self.writer_set = {"csv": self._write_csv} 
-        self.row_reader_set = {"csv": self._readrow_csv}
+        self.row_reader_set = {"csv": self._readrow_csv,"txt": self._read_txt}
+
 
     # --- CSV FUNCTIONS ---
     def _write_csv(self,row_content):
@@ -28,14 +30,36 @@ class Data():
             row_number += self.header_length
         self.file.seek(0)
         row = list(self.csv_reader)[row_number]
-        return row
+        return tuple(row)
+    
+    # --- TXT FUNCTIONS --- 
+    
+    # NO TEXT WRITE, DO NOT ALLOW CREATION OF TXT FILES, ALLOW OPENING OF TXT FILES, BUT NOT WRITING
+
+    def _read_txt(self,row,include_header):
+        self.file.seek(0)
+        list_of_rows = self.file.readlines()
+        if not include_header:
+            row += self.header_length
+            self.data_rows = len(list_of_rows) - self.header_length
+        else:
+            max_header = len(list_of_rows)
+        print(max_header,len(list_of_rows),row)
+        if row > max_header:
+            raise ValueError
+
+        returning_value = ast.literal_eval(list_of_rows[row])
+        return returning_value
+        
+
 
     # --- VISIBLE AND ACCESSIBLE METHODS ---
     def write(self,tuple_of_values):
         self.writer_set[self.format](tuple_of_values)
 
     def read_row(self,row_number,include_header=False):
-        return self.row_reader_set[self.format](row_number,include_header)
+        returned_row = self.row_reader_set[self.format](row_number,include_header)
+        return returned_row
     
     # --- CLASS INITIALIZATION ---
     def _write_header(self):
@@ -45,8 +69,8 @@ class Data():
         self.header_length = 3
 
     def _initialize_csv(self):
-            self.csv_writer = csv.writer(self.file)
-            self.csv_reader = csv.reader(self.file, delimiter=' ', quotechar='|')
+            self.csv_writer = csv.writer(self.file, delimiter=datset.CSV_DELIMITER)
+            self.csv_reader = csv.reader(self.file, delimiter=datset.CSV_DELIMITER, quotechar='|')
     
     def __init__(self,opened_file: typing.TextIO,format):
         if opened_file is None or opened_file.closed:

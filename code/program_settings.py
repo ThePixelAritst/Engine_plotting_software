@@ -1,15 +1,16 @@
 class general_settings():
     MAX_WATCHDOG = 5
-    VERSION_SOFTWARE = "2.0"
-    VERSION_PARSER = "2.0"
+    VERSION_SOFTWARE = "X2.0"
+    VERSION_PARSER = "X2.0"
     VERSION_RECEIVER = "1.1"
 
 
 class data_settings():
-    DEFAULT_FORMAT = "txt"
+    DEFAULT_FORMAT = "csv"
     DEBUG_MODE = True
     DEBUG_DIRECTORY = "testing_directory"
     INVALID_CHARACTERS = r'<>:"/\|?*'
+    CSV_DELIMITER = ","
 
 
     
