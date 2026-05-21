@@ -15,10 +15,18 @@ genset = sett.general_settings
 class Data():
     file: typing.TextIO
 
-    # --- FUNCTION CALL DISPATCH ---
+    # --- WORKING FUNCTIONS ---
     def _initialize_function_dispatch(self):
         self.writer_set = {"csv": self._write_csv} 
         self.row_reader_set = {"csv": self._readrow_csv,"txt": self._read_txt}
+
+    def _initialize_write_csv(self):
+        self.csv_writer = csv.writer(self.file, delimiter=datset.CSV_DELIMITER)
+        self.init_csv[0] = True
+        
+    def _initialize_read_csv(self):
+        self.csv_reader = csv.reader(self.file, delimiter=datset.CSV_DELIMITER)
+        self.init_csv[1] = True
 
 
     # --- CSV FUNCTIONS ---
@@ -33,7 +41,6 @@ class Data():
         return tuple(row)
     
     # --- TXT FUNCTIONS --- 
-    
     # NO TEXT WRITE, DO NOT ALLOW CREATION OF TXT FILES, ALLOW OPENING OF TXT FILES, BUT NOT WRITING
 
     def _read_txt(self,row,include_header):
@@ -45,19 +52,30 @@ class Data():
         else:
             max_header = len(list_of_rows)
         print(max_header,len(list_of_rows),row)
-        if row > max_header:
-            raise ValueError
-
         returning_value = ast.literal_eval(list_of_rows[row])
         return returning_value
         
-
-
     # --- VISIBLE AND ACCESSIBLE METHODS ---
-    def write(self,tuple_of_values):
+    def get_maximum_data_index(self,include_header=False):
+        self.file.seek(0)
+        if not include_header:
+            return (len(list(self.file)) - self.header_length)
+        else: return len(list(self.file))
+
+    def write(self,tuple_of_values=None):
+        if not self.allow_write:
+            raise RuntimeError("Cannot write to file! File must be newly created to allow write!")
+        elif not tuple_of_values != tuple:
+            raise ValueError("Inputed value is not a tuple and thus cannot be writen!")
+        elif self.format == "csv" and not self.init_csv[0]:
+            self._initialize_write_csv()
         self.writer_set[self.format](tuple_of_values)
 
     def read_row(self,row_number,include_header=False):
+        if row_number > self.get_maximum_data_index(include_header):
+            raise IndexError("Cannot access Index outside of file!")
+        if self.format == "csv" and not self.init_csv[1]:
+            self._initialize_read_csv()
         returned_row = self.row_reader_set[self.format](row_number,include_header)
         return returned_row
     
@@ -66,27 +84,24 @@ class Data():
         self.write(("#","SOFTWARE",genset.VERSION_SOFTWARE))
         self.write(("#","PARSER",genset.VERSION_PARSER))
         self.write(("#","RECEIVER",genset.VERSION_RECEIVER))
-        self.header_length = 3
+        self.header_length = 3 # MAKE GET_HEADER_LENGTH FUNCTION!!!
 
-    def _initialize_csv(self):
-            self.csv_writer = csv.writer(self.file, delimiter=datset.CSV_DELIMITER)
-            self.csv_reader = csv.reader(self.file, delimiter=datset.CSV_DELIMITER, quotechar='|')
+    def _initialize_txt(self):
+        self.header_length = 1
     
-    def __init__(self,opened_file: typing.TextIO,format):
+    def __init__(self,opened_file: typing.TextIO,format,newfile):
         if opened_file is None or opened_file.closed:
             raise ValueError(f"Expected an open file object, got: {opened_file!r}!")
         self.file = opened_file
-        self.format = str(format)
+        self.format = format
         self._initialize_function_dispatch()
-
-        if self.format == "csv": # tohle není úplně lovely řešení, rozhodně to jde udělat nějak lépe
-            self._initialize_csv()
-        elif self.format == "txt":
-            pass
+        self.allow_write = newfile
+        if format == "csv":
+            self.init_csv= [False,False]
+            if newfile:
+                self._write_header()
         else:
-            raise ValueError(f"'{self.format} is not a supported file format!'")
-        
-        self._write_header()
+            self._initialize_txt
 
     # tady přijdou write, read a podobné funkce!
 
@@ -120,6 +135,7 @@ class File(Data):
             folder = "data"
         self.folder_directory = os.path.join(Path(__file__).resolve().parents[1],folder)
         self.format = "csv"
+        self.new_file = True
         self.full_path = os.path.join(self.folder_directory,f"{self.file_name}.csv")
         self.file = open(self.full_path,"x+",newline='')
 
@@ -155,7 +171,9 @@ class File(Data):
         self.format = full_name[-1]
         self.file_name = full_name[0]
         self.folder_directory = Path(self.full_path).resolve().parent
+        self.new_file = False
         if self.format == "txt":
+            print(f"WARNING: opening a 'txt' format file. This is no longer a supported format. Please convert this file to {datset.DEFAULT_FORMAT}")
             open_mode = "r"
         else:
             open_mode = "a+"
@@ -184,20 +202,21 @@ class File(Data):
         self._open_file(handover=self.full_path)
         print(f"Renamed '{old_name}.{self.format}' to '{chosen_name}.{self.format}'")         
         
-    def __init__(self,open_file=True,format=datset.DEFAULT_FORMAT):
+    def __init__(self,open_file=True,handover_path=None):
         self.file_open = False
         if open_file: 
-            self._open_file()
+            self._open_file(handover=handover_path)
         else:
             self._create_file()
         if not hasattr(self, 'file') or self.file is None:
             raise RuntimeError("File not created, cannot initiate Data Class")
-        if self.format != datset.DEFAULT_FORMAT:
-            print(f"WARNING: file '{self.file_name}' is encoded in '{self.format}' format, a non standard file format!")
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
-        super().__init__(self.file,format=format)
+        super().__init__(self.file, format=self.format, newfile=self.new_file)
 
-open_file = File(open_file=True)
+open_file = File(open_file=False)
+print(open_file.get_maximum_data_index())
+print(open_file.get_maximum_data_index(True))
 open_file.write(("bleh1","bleh2","bleh3"))
 open_file.write(("10","20","30"))
+open_file.write(())
 print(open_file.read_row(0))
