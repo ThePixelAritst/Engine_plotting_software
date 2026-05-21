@@ -98,7 +98,7 @@ class Data():
 # Ensures handling of the data inside the file can be done smoothly.
 class File(Data):
 
-    def is_valid_filename(self,filename):
+    def _is_valid_filename(self,filename):
         try:
             if re.search(r'[<>:"/\\|?*]',filename): # or not str(filename).isascii()
                 print("Name cannot contain forbidden characters'")
@@ -109,7 +109,7 @@ class File(Data):
         except ValueError: return False
         else: return True 
 
-    def create_file(self,format=datset.DEFAULT_FORMAT): #creates file
+    def _create_file(self): #creates file
         if self.file_open:
             raise RuntimeError("Cannot create secondary file in one class instance'")
         self.file_open = True
@@ -119,17 +119,17 @@ class File(Data):
         else:
             folder = "data"
         self.folder_directory = os.path.join(Path(__file__).resolve().parents[1],folder)
-        self.format = format
-        self.full_path = os.path.join(self.folder_directory,f"{self.file_name}.{self.format}")
+        self.format = "csv"
+        self.full_path = os.path.join(self.folder_directory,f"{self.file_name}.csv")
         self.file = open(self.full_path,"x+",newline='')
 
-    def close_file(self,report_closed=True):
+    def _close_file(self,report_closed=True):
         self.file.close()
         self.file_open = False
         if report_closed:
             print(f"File {self.file_name}.{self.format} was closed.")
 
-    def open_file(self, handover=None):
+    def _open_file(self, handover=None):
         if self.file_open:
             raise RuntimeError("Cannot open secondary file in one class instance!")
         elif handover:
@@ -155,7 +155,11 @@ class File(Data):
         self.format = full_name[-1]
         self.file_name = full_name[0]
         self.folder_directory = Path(self.full_path).resolve().parent
-        self.file = open(self.full_path,"a+",newline='')
+        if self.format == "txt":
+            open_mode = "r"
+        else:
+            open_mode = "a+"
+        self.file = open(self.full_path,open_mode,newline='\n')
 
     def rename(self):
         watchdog = 0
@@ -163,7 +167,7 @@ class File(Data):
 
         while watchdog < genset.MAX_WATCHDOG:
             chosen_name = input("Please input a new name for the file.\n")
-            if self.is_valid_filename(chosen_name,self.folder_directory,self.format):
+            if self._is_valid_filename(chosen_name,self.folder_directory,self.format):
                 self.file_name = chosen_name
                 break
             else:
@@ -172,20 +176,20 @@ class File(Data):
                 if watchdog >= genset.MAX_WATCHDOG:
                     exit("\nWatchdog exceeded, terminating program.\n\n")
 
-        self.close_file(report_closed=False)
+        self._close_file(report_closed=False)
         new_file_path = os.path.join(self.folder_directory,f"{chosen_name}.{self.format}")
         os.rename(self.full_path,new_file_path)
         self.full_path = new_file_path
         self.file_name = chosen_name
-        self.open_file(handover=self.full_path)
+        self._open_file(handover=self.full_path)
         print(f"Renamed '{old_name}.{self.format}' to '{chosen_name}.{self.format}'")         
         
     def __init__(self,open_file=True,format=datset.DEFAULT_FORMAT):
         self.file_open = False
         if open_file: 
-            self.open_file()
+            self._open_file()
         else:
-            self.create_file(format)
+            self._create_file()
         if not hasattr(self, 'file') or self.file is None:
             raise RuntimeError("File not created, cannot initiate Data Class")
         if self.format != datset.DEFAULT_FORMAT:
@@ -193,7 +197,7 @@ class File(Data):
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file,format=format)
 
-open_file = File(open_file=False,format="csv")
+open_file = File(open_file=True)
 open_file.write(("bleh1","bleh2","bleh3"))
 open_file.write(("10","20","30"))
 print(open_file.read_row(0))
