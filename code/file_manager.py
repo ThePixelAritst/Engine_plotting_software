@@ -28,22 +28,50 @@ class Data():
         self.csv_reader = csv.reader(self.file, delimiter=datset.CSV_DELIMITER)
         self.init_csv[1] = True
 
+    def _lock_file_content(self):
+        self.allow_write = False
+
 
     # --- CSV FUNCTIONS ---
     def _write_csv(self,row_content):
         self.csv_writer.writerow(row_content)
 
-    def _readrow_csv(self,row_number,include_header):
+    def _readrow_csv(self,row_number,include_header=False):
         if not include_header:
             row_number += self.header_length
         self.file.seek(0)
         row = list(self.csv_reader)[row_number]
+        self.file.seek(0)
         return tuple(row)
+    
+    def _readcollumns_csv(self,selected_collumns,max_length=None):
+        self.file.seek(0)
+        if not isinstance(selected_collumns,(tuple,list,int)):
+            raise TypeError(f"Cannot interpret '{type(selected_collumns)}' as a collumn index!")
+      #  if type(selected_collumns) == int:
+       #     selected_collumns = (selected_collumns,)
+        if isinstance(selected_collumns,(tuple,list)) and not selected_collumns:
+            raise ValueError(f"List or tuple cannot be empty!")
+        if not max_length or int(max_length) > len(list(self.csv_reader))-self.header_length:
+            max_length = len(list(self.csv_reader))-self.header_length
+            print("list length",len(list(self.csv_reader)))
+            print("max length",max_length)
+
+        collumn_list = []
+        for row_pointer in range(max_length):
+            print("row pointer",row_pointer)
+            row = self._readrow_csv(row_pointer)
+            collumn_list.append(row[selected_collumns])
+            print(collumn_list)
+        
+        return_dict = {selected_collumns: collumn_list} 
+        
+        return return_dict
     
     # --- TXT FUNCTIONS --- 
     # NO TEXT WRITE, DO NOT ALLOW CREATION OF TXT FILES, ALLOW OPENING OF TXT FILES, BUT NOT WRITING
 
-    def _read_txt(self,row,include_header):
+    def _read_txt(self,row,include_header): # does not work, likely
         self.file.seek(0)
         list_of_rows = self.file.readlines()
         if not include_header:
@@ -51,7 +79,6 @@ class Data():
             self.data_rows = len(list_of_rows) - self.header_length
         else:
             max_header = len(list_of_rows)
-        print(max_header,len(list_of_rows),row)
         returning_value = ast.literal_eval(list_of_rows[row])
         return returning_value
         
@@ -80,11 +107,22 @@ class Data():
         return returned_row
     
     # --- CLASS INITIALIZATION ---
+    def _get_header_length(self):
+        if self.format == "txt":
+            return self.header_length
+        
+        pointer = 0
+        try:
+            while self.read_row(pointer,include_header=True)[0] == "#":
+                pointer += 1
+        finally: 
+            return pointer
+
     def _write_header(self):
         self.write(("#","SOFTWARE",genset.VERSION_SOFTWARE))
         self.write(("#","PARSER",genset.VERSION_PARSER))
         self.write(("#","RECEIVER",genset.VERSION_RECEIVER))
-        self.header_length = 3 # MAKE GET_HEADER_LENGTH FUNCTION!!!
+        
 
     def _initialize_txt(self):
         self.header_length = 1
@@ -100,10 +138,9 @@ class Data():
             self.init_csv= [False,False]
             if newfile:
                 self._write_header()
+            self.header_length = self._get_header_length()
         else:
-            self._initialize_txt
-
-    # tady přijdou write, read a podobné funkce!
+            self._initialize_txt()
 
 
 # ---- FILE HANDLING ----
@@ -213,10 +250,14 @@ class File(Data):
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file, format=self.format, newfile=self.new_file)
 
-open_file = File(open_file=False)
-print(open_file.get_maximum_data_index())
-print(open_file.get_maximum_data_index(True))
-open_file.write(("bleh1","bleh2","bleh3"))
-open_file.write(("10","20","30"))
-open_file.write(())
-print(open_file.read_row(0))
+open_file = File(open_file=False,handover_path="/home/pixel/Documents/coding/Compressed-air-engine-python-part/testing_directory/2026-05-25--Mon--13-47-48.csv")
+try:
+    for iteration in range(20):
+        open_file.write((iteration,iteration*2,iteration*3))
+        print("write n.:",iteration)
+except Exception:
+    print("Cannot write to file!")
+#print(open_file._get_header_length())
+#print(open_file.read_row(0,True))
+#print(open_file.read_row(0))
+print(open_file._readcollumns_csv((1)))

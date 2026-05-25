@@ -22,4 +22,10 @@ class outer():
 
 bleh = outer()
 
-bleh.write("does he even see me")
+test = (1)
+print(type(test))
+if type(test) == int:
+    test = (test,)
+    
+for x in test:
+    print(x)
