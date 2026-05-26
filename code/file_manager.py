@@ -48,25 +48,20 @@ class Data():
         self.file.seek(0)
         if not isinstance(selected_collumns,(tuple,list,int)):
             raise TypeError(f"Cannot interpret '{type(selected_collumns)}' as a collumn index!")
-      #  if type(selected_collumns) == int:
-       #     selected_collumns = (selected_collumns,)
+        if type(selected_collumns) == int:
+            selected_collumns = (selected_collumns,)
         if isinstance(selected_collumns,(tuple,list)) and not selected_collumns:
             raise ValueError(f"List or tuple cannot be empty!")
         if not max_length or int(max_length) > len(list(self.csv_reader))-self.header_length:
             max_length = len(list(self.csv_reader))-self.header_length
-            print("list length",len(list(self.csv_reader)))
-            print("max length",max_length)
 
-        collumn_list = []
+        collumn_list = {col: [] for col in selected_collumns}
         for row_pointer in range(max_length):
-            print("row pointer",row_pointer)
             row = self._readrow_csv(row_pointer)
-            collumn_list.append(row[selected_collumns])
-            print(collumn_list)
-        
-        return_dict = {selected_collumns: collumn_list} 
-        
-        return return_dict
+            for collumn in selected_collumns:
+                collumn_list[collumn].append(row[collumn])
+
+        return collumn_list
     
     # --- TXT FUNCTIONS --- 
     # NO TEXT WRITE, DO NOT ALLOW CREATION OF TXT FILES, ALLOW OPENING OF TXT FILES, BUT NOT WRITING
@@ -250,7 +245,7 @@ class File(Data):
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file, format=self.format, newfile=self.new_file)
 
-open_file = File(open_file=False,handover_path="/home/pixel/Documents/coding/Compressed-air-engine-python-part/testing_directory/2026-05-25--Mon--13-47-48.csv")
+open_file = File(open_file=True,handover_path="/home/pixel/Documents/coding/Compressed-air-engine-python-part/testing_directory/2026-05-25--Mon--13-47-48.csv")
 try:
     for iteration in range(20):
         open_file.write((iteration,iteration*2,iteration*3))
@@ -260,4 +255,7 @@ except Exception:
 #print(open_file._get_header_length())
 #print(open_file.read_row(0,True))
 #print(open_file.read_row(0))
-print(open_file._readcollumns_csv((1)))
+columns = (1,2)
+list = open_file._readcollumns_csv(columns)
+for x in columns:
+    print(f"{x}: {list[x]}")
