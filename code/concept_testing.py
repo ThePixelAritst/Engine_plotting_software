@@ -25,7 +25,7 @@ bleh = outer()
 column_data = {col: [] for col in range(10)}
 print(column_data)
 
-test = (1)
+test = 1
 print(type(test))
 if type(test) == int:
     test = (test,)

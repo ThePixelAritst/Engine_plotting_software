@@ -15,10 +15,12 @@ genset = sett.general_settings
 class Data():
     file: typing.TextIO
 
-    # --- WORKING FUNCTIONS ---
+    # --- WORKING FUNCTIONS --- 
+        # 
     def _initialize_function_dispatch(self):
         self.writer_set = {"csv": self._write_csv} 
-        self.row_reader_set = {"csv": self._readrow_csv,"txt": self._read_txt}
+        self.row_reader_set = {"csv": self._readrow_csv,"txt": self._readrow_txt}
+        self.column_reader_set = {"csv": self._readcolumns_csv}
 
     def _initialize_write_csv(self):
         self.csv_writer = csv.writer(self.file, delimiter=datset.CSV_DELIMITER)
@@ -44,7 +46,7 @@ class Data():
         self.file.seek(0)
         return tuple(row)
     
-    def _readcollumns_csv(self,selected_collumns,max_length=None):
+    def _readcolumns_csv(self,selected_collumns,max_length=None): # reads the selected column without header
         self.file.seek(0)
         if not isinstance(selected_collumns,(tuple,list,int)):
             raise TypeError(f"Cannot interpret '{type(selected_collumns)}' as a collumn index!")
@@ -52,12 +54,16 @@ class Data():
             selected_collumns = (selected_collumns,)
         if isinstance(selected_collumns,(tuple,list)) and not selected_collumns:
             raise ValueError(f"List or tuple cannot be empty!")
+        if (max(selected_collumns) or len(selected_collumns)) >= len(self.read_row(0)):
+            raise IndexError(f"Requested column index outside row margins")
+            
         if not max_length or int(max_length) > len(list(self.csv_reader))-self.header_length:
             max_length = len(list(self.csv_reader))-self.header_length
+            print(max_length)
 
         collumn_list = {col: [] for col in selected_collumns}
         for row_pointer in range(max_length):
-            row = self._readrow_csv(row_pointer)
+            row = self.read_row(row_pointer)
             for collumn in selected_collumns:
                 collumn_list[collumn].append(row[collumn])
 
@@ -66,7 +72,7 @@ class Data():
     # --- TXT FUNCTIONS --- 
     # NO TEXT WRITE, DO NOT ALLOW CREATION OF TXT FILES, ALLOW OPENING OF TXT FILES, BUT NOT WRITING
 
-    def _read_txt(self,row,include_header): # does not work, likely
+    def _readrow_txt(self,row,include_header): # does not work, likely
         self.file.seek(0)
         list_of_rows = self.file.readlines()
         if not include_header:
@@ -252,10 +258,9 @@ try:
         print("write n.:",iteration)
 except Exception:
     print("Cannot write to file!")
-#print(open_file._get_header_length())
-#print(open_file.read_row(0,True))
-#print(open_file.read_row(0))
-columns = (1,2)
-list = open_file._readcollumns_csv(columns)
-for x in columns:
-    print(f"{x}: {list[x]}")
+print(open_file._get_header_length())
+print(open_file.read_row(1,True))
+print(open_file.read_row(1))
+columns = (0,1,2)
+list = open_file._readcolumns_csv(columns)
+print(list)
