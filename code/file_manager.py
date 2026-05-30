@@ -16,11 +16,11 @@ class Data():
     file: typing.TextIO
 
     # --- WORKING FUNCTIONS --- 
-        # 
+        # functions which shouldnt be accessed from outside, but are essential for functioning of the program
     def _initialize_function_dispatch(self):
         self.writer_set = {"csv": self._write_csv} 
         self.row_reader_set = {"csv": self._readrow_csv,"txt": self._readrow_txt}
-        self.column_reader_set = {"csv": self._readcolumns_csv}
+        self.column_reader_set = {"csv": self._readcolumns_csv, "txt": self._readcolumns_txt}
 
     def _initialize_write_csv(self):
         self.csv_writer = csv.writer(self.file, delimiter=datset.CSV_DELIMITER)
@@ -32,9 +32,20 @@ class Data():
 
     def _lock_file_content(self):
         self.allow_write = False
+    
+    def check_column_validity(self,columns):
+        if not isinstance(columns,(tuple,list,int)):
+            raise TypeError(f"Cannot interpret '{type(columns)}' as a collumn index!")
+        if type(columns) == int:
+            columns = (columns,)
+        if isinstance(columns,(tuple,list)) and not columns:
+            raise ValueError(f"List or tuple cannot be empty!")
+        
+        return columns
 
 
     # --- CSV FUNCTIONS ---
+        # functions for .csv fileset, primary functions which operate with the data
     def _write_csv(self,row_content):
         self.csv_writer.writerow(row_content)
 
@@ -46,14 +57,10 @@ class Data():
         self.file.seek(0)
         return tuple(row)
     
-    def _readcolumns_csv(self,selected_collumns,max_length=None): # reads the selected column without header
+    def _readcolumns_csv(self,selected_collumns,max_length=None):
+        # reads the selected column without header
         self.file.seek(0)
-        if not isinstance(selected_collumns,(tuple,list,int)):
-            raise TypeError(f"Cannot interpret '{type(selected_collumns)}' as a collumn index!")
-        if type(selected_collumns) == int:
-            selected_collumns = (selected_collumns,)
-        if isinstance(selected_collumns,(tuple,list)) and not selected_collumns:
-            raise ValueError(f"List or tuple cannot be empty!")
+        selected_collumns = self.check_column_validity(selected_collumns)
         if (max(selected_collumns) or len(selected_collumns)) >= len(self.read_row(0)):
             raise IndexError(f"Requested column index outside row margins")
             
@@ -61,29 +68,42 @@ class Data():
             max_length = len(list(self.csv_reader))-self.header_length
             print(max_length)
 
-        collumn_list = {col: [] for col in selected_collumns}
+        column_dict = {col: [] for col in selected_collumns}
         for row_pointer in range(max_length):
             row = self.read_row(row_pointer)
             for collumn in selected_collumns:
-                collumn_list[collumn].append(row[collumn])
+                column_dict[collumn].append(row[collumn])
 
-        return collumn_list
+        return column_dict
     
-    # --- TXT FUNCTIONS --- 
-    # NO TEXT WRITE, DO NOT ALLOW CREATION OF TXT FILES, ALLOW OPENING OF TXT FILES, BUT NOT WRITING
 
-    def _readrow_txt(self,row,include_header): # does not work, likely
+    # --- TXT FUNCTIONS --- 
+        # secondary functions for the outdated .txt file and data handling. These are not as thouroughly tested
+        # !!! Collums go along a horizontal list, rows go verical between the two data lists. 
+        # .txt does not allow writing to file, and no writing functions should ever exist
+
+    def _readrow_txt(self,row,include_header): # reads both lists' values with the same index - csv equivalent to row
+        return NotImplemented
+    
+    def _readcolumns_txt(self,columns,max_length=None): # reads whole list on a given horizontal line - csv equivalent to column
+        columns = self.check_column_validity(columns)
         self.file.seek(0)
-        list_of_rows = self.file.readlines()
-        if not include_header:
-            row += self.header_length
-            self.data_rows = len(list_of_rows) - self.header_length
-        else:
-            max_header = len(list_of_rows)
-        returning_value = ast.literal_eval(list_of_rows[row])
-        return returning_value
-        
+        file_content = self.file.readlines()
+        if (max(columns) or len(columns)) >= len(file_content):
+            raise IndexError(f"Requested column index outside row margins")
+        read_limit = max_length
+        return_dict = {col: [] for col in columns}
+        for current_column in columns:
+            literal_list = ast.literal_eval(file_content[current_column])
+            if not max_length:
+                read_limit = len(literal_list)
+            return_dict[current_column] = (literal_list[:read_limit])
+        return return_dict
+            
+
     # --- VISIBLE AND ACCESSIBLE METHODS ---
+        # methods meant to be accessed from outside the class structure
+
     def get_maximum_data_index(self,include_header=False):
         self.file.seek(0)
         if not include_header:
@@ -107,7 +127,11 @@ class Data():
         returned_row = self.row_reader_set[self.format](row_number,include_header)
         return returned_row
     
+    def read_column(self,columns,max_length=None):
+        return self.column_reader_set[self.format](columns,max_length)
+
     # --- CLASS INITIALIZATION ---
+
     def _get_header_length(self):
         if self.format == "txt":
             return self.header_length
@@ -251,7 +275,7 @@ class File(Data):
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file, format=self.format, newfile=self.new_file)
 
-open_file = File(open_file=True,handover_path="/home/pixel/Documents/coding/Compressed-air-engine-python-part/testing_directory/2026-05-25--Mon--13-47-48.csv")
+open_file = File(open_file=True,handover_path="/home/pixel/Documents/coding/Compressed-air-engine-python-part/testing_directory/video-run-2.txt")
 try:
     for iteration in range(20):
         open_file.write((iteration,iteration*2,iteration*3))
@@ -261,6 +285,8 @@ except Exception:
 print(open_file._get_header_length())
 print(open_file.read_row(1,True))
 print(open_file.read_row(1))
-columns = (0,1,2)
-list = open_file._readcolumns_csv(columns)
-print(list)
+print(open_file.get_maximum_data_index())
+columns = [1,2]
+print(open_file._readcolumns_txt(columns,2))
+print("reading from open function")
+print(open_file.read_column(columns,10))

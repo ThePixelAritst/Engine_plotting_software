@@ -30,5 +30,10 @@ print(type(test))
 if type(test) == int:
     test = (test,)
 
-for x in test:
-    print(x)
+list = []
+for number in range(20):
+    list.append(number)
+
+print(list)
+print(list[:30])
+print(list[:10])
