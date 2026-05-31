@@ -105,7 +105,7 @@ class Data():
     def get_maximum_data_index(self,include_header=False):
         self.file.seek(0)
         if not include_header:
-            return (len(list(self.file)) - self._get_header_length())-1
+            return (len(list(self.file)) - self.header_length)-1
         else: return len(list(self.file))-1
 
     def write(self,tuple_of_values=None):
@@ -136,12 +136,13 @@ class Data():
         pointer = 0
         while True:
             try:
-                if not self.read_row(pointer,include_header=True)[0] == "#":
-                    break
+                row = self.read_row(pointer,include_header=True)
+
             except IndexError:
                 break
-            else:
-                pointer += 1
+            if row[0] != "#":
+                break
+            pointer += 1
         return pointer
 
     def _write_header(self):
@@ -276,13 +277,13 @@ class File(Data):
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file, format=self.format, newfile=self.new_file)
 
-open_file = File(open_file=True)
+open_file = File(open_file=True,handover_path=r"D:\Coding adventures\engine_readout\testing_directory\2026-05-31--Sun--15-31-05.csv")
 
 try:
     for iteration in range(6):
         open_file.write((iteration,iteration*2,iteration*3))
         print("write n.:",iteration)
-except Exception:
+except Exception:   
     print("Cannot write to file!")
 
 print("header length:",open_file._get_header_length())
