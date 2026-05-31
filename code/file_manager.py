@@ -40,7 +40,6 @@ class Data():
             columns = (columns,)
         if isinstance(columns,(tuple,list)) and not columns:
             raise ValueError(f"List or tuple cannot be empty!")
-        
         return columns
 
 
@@ -65,11 +64,11 @@ class Data():
             raise IndexError(f"Requested column index outside row margins")
             
         if not max_length or int(max_length) > len(list(self.csv_reader))-self.header_length:
-            max_length = len(list(self.csv_reader))-self.header_length
-            print(max_length)
+            max_length = self.get_maximum_data_index() + 1
 
         column_dict = {col: [] for col in selected_collumns}
         for row_pointer in range(max_length):
+            print(row_pointer)
             row = self.read_row(row_pointer)
             for collumn in selected_collumns:
                 column_dict[collumn].append(row[collumn])
@@ -107,8 +106,8 @@ class Data():
     def get_maximum_data_index(self,include_header=False):
         self.file.seek(0)
         if not include_header:
-            return (len(list(self.file)) - self.header_length)
-        else: return len(list(self.file))
+            return (len(list(self.file)) - self._get_header_length())-1
+        else: return len(list(self.file))-1
 
     def write(self,tuple_of_values=None):
         if not self.allow_write:
@@ -120,10 +119,10 @@ class Data():
         self.writer_set[self.format](tuple_of_values)
 
     def read_row(self,row_number,include_header=False):
-        if row_number > self.get_maximum_data_index(include_header):
-            raise IndexError("Cannot access Index outside of file!")
         if self.format == "csv" and not self.init_csv[1]:
             self._initialize_read_csv()
+        if row_number > self.get_maximum_data_index(include_header):
+            raise IndexError("Cannot access Index outside of file!")
         returned_row = self.row_reader_set[self.format](row_number,include_header)
         return returned_row
     
@@ -135,13 +134,16 @@ class Data():
     def _get_header_length(self):
         if self.format == "txt":
             return self.header_length
-        
         pointer = 0
-        try:
-            while self.read_row(pointer,include_header=True)[0] == "#":
+        while True:
+            try:
+                if not self.read_row(pointer,include_header=True)[0] == "#":
+                    break
+            except IndexError:
+                break
+            else:
                 pointer += 1
-        finally: 
-            return pointer
+        return pointer
 
     def _write_header(self):
         self.write(("#","SOFTWARE",genset.VERSION_SOFTWARE))
@@ -235,7 +237,7 @@ class File(Data):
         self.folder_directory = Path(self.full_path).resolve().parent
         self.new_file = False
         if self.format == "txt":
-            print(f"WARNING: opening a 'txt' format file. This is no longer a supported format. Please convert this file to {datset.DEFAULT_FORMAT}")
+            print(f"WARNING: opening a 'txt' format file. This is no longer a supported format. Please convert this file to '{datset.DEFAULT_FORMAT}' file format")
             open_mode = "r"
         else:
             open_mode = "a+"
@@ -275,18 +277,21 @@ class File(Data):
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file, format=self.format, newfile=self.new_file)
 
-open_file = File(open_file=True,handover_path="/home/pixel/Documents/coding/Compressed-air-engine-python-part/testing_directory/video-run-2.txt")
+open_file = File(open_file=True,handover_path=r"D:\Coding adventures\engine_readout\testing_directory\2026-05-31--Sun--16-16-03.csv")
+
 try:
-    for iteration in range(20):
+    for iteration in range(6):
         open_file.write((iteration,iteration*2,iteration*3))
         print("write n.:",iteration)
 except Exception:
     print("Cannot write to file!")
-print(open_file._get_header_length())
-print(open_file.read_row(1,True))
-print(open_file.read_row(1))
+
+print("header length",open_file._get_header_length())
+print("max data index wihtout header",open_file.get_maximum_data_index())
+print("max data index",open_file.get_maximum_data_index(True))
+print(open_file.read_row((open_file._get_header_length())-1,True))
+print(open_file.read_row(open_file.get_maximum_data_index()))
 print(open_file.get_maximum_data_index())
-columns = [1,2]
-print(open_file._readcolumns_txt(columns,2))
-print("reading from open function")
-print(open_file.read_column(columns,10))
+print("reading columns")
+columns = [0,1]
+print(open_file.read_column(columns))
