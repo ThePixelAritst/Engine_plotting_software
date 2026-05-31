@@ -113,12 +113,12 @@ class Data():
             raise RuntimeError("Cannot write to file! File must be newly created to allow write!")
         elif not tuple_of_values != tuple:
             raise ValueError("Inputed value is not a tuple and thus cannot be writen!")
-        elif self.format == "csv" and not self.init_csv["reader"]:
+        elif self.format == "csv" and not self.init_csv["writer"]:
             self._initialize_write_csv()
         self.writer_set[self.format](tuple_of_values)
 
     def read_row(self,row_number,include_header=False):
-        if self.format == "csv" and not self.init_csv["writer"]:
+        if self.format == "csv" and not self.init_csv["reader"]:
             self._initialize_read_csv()
         if row_number > self.get_maximum_data_index(include_header):
             raise IndexError("Cannot access Index outside of file!")
@@ -130,7 +130,7 @@ class Data():
 
     # --- CLASS INITIALIZATION ---
 
-    def _get_header_length(self):
+    def _get_header_length(self,denominator=datset.DEFAULT_HEADER_DENOMINATOR):
         if self.format == "txt":
             return self.header_length
         pointer = 0
@@ -140,7 +140,7 @@ class Data():
 
             except IndexError:
                 break
-            if row[0] != "#":
+            if row[0] != denominator:
                 break
             pointer += 1
         return pointer
@@ -149,6 +149,7 @@ class Data():
         self.write(("#","SOFTWARE",genset.VERSION_SOFTWARE))
         self.write(("#","PARSER",genset.VERSION_PARSER))
         self.write(("#","RECEIVER",genset.VERSION_RECEIVER))
+        self.write(("#","CREATION_DATE",time.strftime("%Y-%m-%d--%H:%M:%S")))
         
 
     def _initialize_txt(self):
@@ -219,7 +220,7 @@ class File(Data):
             while attempt < genset.MAX_WATCHDOG:
                 try:
                     unconfirmed_path = input("Please input file to be opened:\n")
-                    if not( Path(unconfirmed_path).exists() and Path(unconfirmed_path).is_file()):
+                    if not(Path(unconfirmed_path).exists() and Path(unconfirmed_path).is_file()):
                         raise ValueError()
                     else:
                         self.full_path = unconfirmed_path
@@ -277,7 +278,7 @@ class File(Data):
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file, format=self.format, newfile=self.new_file)
 
-open_file = File(open_file=True,handover_path=r"D:\Coding adventures\engine_readout\testing_directory\2026-05-31--Sun--15-31-05.csv")
+open_file = File(open_file=False,handover_path=r"D:\Coding adventures\engine_readout\testing_directory\2026-05-31--Sun--15-31-05.csv")
 
 try:
     for iteration in range(6):

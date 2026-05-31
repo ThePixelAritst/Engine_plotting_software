@@ -7,10 +7,11 @@ class general_settings():
 
 class data_settings():
     DEFAULT_FORMAT = "csv"
-    DEBUG_MODE = True
+    DEFAULT_HEADER_DENOMINATOR = "#"
     DEBUG_DIRECTORY = "testing_directory"
     INVALID_CHARACTERS = r'<>:"/\|?*'
     CSV_DELIMITER = ","
+    DEBUG_MODE = True
 
 
     
