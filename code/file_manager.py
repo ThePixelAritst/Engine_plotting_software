@@ -24,11 +24,11 @@ class Data():
 
     def _initialize_write_csv(self):
         self.csv_writer = csv.writer(self.file, delimiter=datset.CSV_DELIMITER)
-        self.init_csv[0] = True
+        self.init_csv["writer"] = True
         
     def _initialize_read_csv(self):
         self.csv_reader = csv.reader(self.file, delimiter=datset.CSV_DELIMITER)
-        self.init_csv[1] = True
+        self.init_csv["reader"] = True
 
     def _lock_file_content(self):
         self.allow_write = False
@@ -68,7 +68,6 @@ class Data():
 
         column_dict = {col: [] for col in selected_collumns}
         for row_pointer in range(max_length):
-            print(row_pointer)
             row = self.read_row(row_pointer)
             for collumn in selected_collumns:
                 column_dict[collumn].append(row[collumn])
@@ -114,12 +113,12 @@ class Data():
             raise RuntimeError("Cannot write to file! File must be newly created to allow write!")
         elif not tuple_of_values != tuple:
             raise ValueError("Inputed value is not a tuple and thus cannot be writen!")
-        elif self.format == "csv" and not self.init_csv[0]:
+        elif self.format == "csv" and not self.init_csv["reader"]:
             self._initialize_write_csv()
         self.writer_set[self.format](tuple_of_values)
 
     def read_row(self,row_number,include_header=False):
-        if self.format == "csv" and not self.init_csv[1]:
+        if self.format == "csv" and not self.init_csv["writer"]:
             self._initialize_read_csv()
         if row_number > self.get_maximum_data_index(include_header):
             raise IndexError("Cannot access Index outside of file!")
@@ -162,7 +161,7 @@ class Data():
         self._initialize_function_dispatch()
         self.allow_write = newfile
         if format == "csv":
-            self.init_csv= [False,False]
+            self.init_csv= {"reader": False, "writer": False}
             if newfile:
                 self._write_header()
             self.header_length = self._get_header_length()
@@ -277,7 +276,7 @@ class File(Data):
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file, format=self.format, newfile=self.new_file)
 
-open_file = File(open_file=True,handover_path=r"D:\Coding adventures\engine_readout\testing_directory\2026-05-31--Sun--16-16-03.csv")
+open_file = File(open_file=True)
 
 try:
     for iteration in range(6):
@@ -286,12 +285,11 @@ try:
 except Exception:
     print("Cannot write to file!")
 
-print("header length",open_file._get_header_length())
-print("max data index wihtout header",open_file.get_maximum_data_index())
-print("max data index",open_file.get_maximum_data_index(True))
+print("header length:",open_file._get_header_length())
+print("max data index wihtout header:",open_file.get_maximum_data_index())
+print("max data index:",open_file.get_maximum_data_index(True))
 print(open_file.read_row((open_file._get_header_length())-1,True))
 print(open_file.read_row(open_file.get_maximum_data_index()))
-print(open_file.get_maximum_data_index())
 print("reading columns")
 columns = [0,1]
 print(open_file.read_column(columns))
