@@ -21,6 +21,7 @@ class Data():
         self.writer_set = {"csv": self._write_csv} 
         self.row_reader_set = {"csv": self._readrow_csv,"txt": self._readrow_txt}
         self.column_reader_set = {"csv": self._readcolumns_csv, "txt": self._readcolumns_txt}
+        self.max_index_set = {"csv": self._max_data_index_csv, "txt": self._max_data_index_txt}
 
     def _initialize_write_csv(self):
         self.csv_writer = csv.writer(self.file, delimiter=datset.CSV_DELIMITER)
@@ -45,6 +46,12 @@ class Data():
 
     # --- CSV FUNCTIONS ---
         # functions for .csv fileset, primary functions which operate with the data
+    def _max_data_index_csv(self,include_header=False):
+        self.file.seek(0)
+        if not include_header:
+            return (len(list(self.file)) - self.header_length)-1
+        else: return len(list(self.file))-1
+
     def _write_csv(self,row_content):
         self.csv_writer.writerow(row_content)
 
@@ -79,9 +86,17 @@ class Data():
         # secondary functions for the outdated .txt file and data handling. These are not as thouroughly tested
         # !!! Collums go along a horizontal list, rows go verical between the two data lists. 
         # .txt does not allow writing to file, and no writing functions should ever exist
-
-    def _readrow_txt(self,row,include_header): # reads both lists' values with the same index - csv equivalent to row
-        return NotImplemented
+    def _valid_txt_header(self):
+        self.file.seek(0)
+        file_content = self.file.readlines()
+        header = ast.literal_eval(file_content[0])
+        if (len(header) != 2) or (header[0] != header[1]) or (type(header[0]) != int):
+            return False
+        else:
+            return True
+    
+    def _max_data_index_txt(self,*args):
+        return self._readrow_txt(include_header=True)[0]-1
     
     def _readcolumns_txt(self,columns,max_length=None): # reads whole list on a given horizontal line - csv equivalent to column
         columns = self.check_column_validity(columns)
@@ -97,16 +112,28 @@ class Data():
                 read_limit = len(literal_list)
             return_dict[current_column] = (literal_list[:read_limit])
         return return_dict
+    
+    def _readrow_txt(self,row=0,include_header=False): # reads both lists' values with the same index - csv equivalent to row
+        if not self._valid_txt_header():
+            raise ValueError("unknown '.txt' file data format!")
+        self.file.seek(0)
+        file_content = self.file.readlines()
+        header = ast.literal_eval(file_content[0])
+        if include_header:
+            return tuple(header)
+        desired_rows = (1,2)
+        returning_row = []
+        data = self.read_column(desired_rows)
+        for current_item in data:
+            returning_row.append(data[current_item][row])
+        return tuple(returning_row)
             
 
     # --- VISIBLE AND ACCESSIBLE METHODS ---
         # methods meant to be accessed from outside the class structure
 
     def get_maximum_data_index(self,include_header=False):
-        self.file.seek(0)
-        if not include_header:
-            return (len(list(self.file)) - self.header_length)-1
-        else: return len(list(self.file))-1
+        return self.max_index_set[self.format](include_header)
 
     def write(self,tuple_of_values=None):
         if not self.allow_write:
@@ -278,7 +305,7 @@ class File(Data):
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file, format=self.format, newfile=self.new_file)
 
-open_file = File(open_file=False,handover_path=r"D:\Coding adventures\engine_readout\testing_directory\2026-05-31--Sun--15-31-05.csv")
+open_file = File(open_file=True,handover_path=r"D:\Coding adventures\engine_readout\testing_directory\video-run-2.txt")
 
 try:
     for iteration in range(6):
@@ -288,10 +315,11 @@ except Exception:
     print("Cannot write to file!")
 
 print("header length:",open_file._get_header_length())
-print("max data index wihtout header:",open_file.get_maximum_data_index())
+print("max data index without header:",open_file.get_maximum_data_index())
 print("max data index:",open_file.get_maximum_data_index(True))
 print(open_file.read_row((open_file._get_header_length())-1,True))
-print(open_file.read_row(open_file.get_maximum_data_index()))
+print(open_file.read_row(0))
+print(open_file.read_row(3))
 print("reading columns")
 columns = [0,1]
 print(open_file.read_column(columns))
