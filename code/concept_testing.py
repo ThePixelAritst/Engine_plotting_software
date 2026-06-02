@@ -1,39 +1,6 @@
-class outer():
-    formatting = 2
-    file = "dont mind me, just passing through"
+import file_manager as fm
 
-    class inner_1():
-        def write_as_1(custom):
-            print("not stinky")
-            print(outer.file)
-            print(custom)
-
-    class inner_2():
-        def write_as_2(custom=None):
-            print("stinky")
-            print(outer.file)
-            print(custom)
-
-    def write(self,custom_text):
-        available_calls = {1: self.inner_1.write_as_1,
-                     2: self.inner_2.write_as_2}
-        
-        available_calls[self.formatting](custom_text)
-
-bleh = outer()
-
-column_data = {col: [] for col in range(10)}
-print(column_data)
-
-test = 1
-print(type(test))
-if type(test) == int:
-    test = (test,)
-
-list = []
-for number in range(20):
-    list.append(number)
-
-print(list)
-print(list[:30])
-print(list[:10])
+file = fm.File(False)
+file.write(("mega stinky",0))
+print(file.read_row(0))
+file.write()

@@ -34,7 +34,7 @@ class Data():
     def _lock_file_content(self):
         self.allow_write = False
     
-    def check_column_validity(self,columns):
+    def _check_column_validity(self,columns):
         if not isinstance(columns,(tuple,list,int)):
             raise TypeError(f"Cannot interpret '{type(columns)}' as a collumn index!")
         if type(columns) == int:
@@ -66,7 +66,7 @@ class Data():
     def _readcolumns_csv(self,selected_collumns,max_length=None):
         # reads the selected column without header
         self.file.seek(0)
-        selected_collumns = self.check_column_validity(selected_collumns)
+        selected_collumns = self._check_column_validity(selected_collumns)
         if (max(selected_collumns) or len(selected_collumns)) >= len(self.read_row(0)):
             raise IndexError(f"Requested column index outside row margins")
             
@@ -99,7 +99,7 @@ class Data():
         return self._readrow_txt(include_header=True)[0]-1
     
     def _readcolumns_txt(self,columns,max_length=None): # reads whole list on a given horizontal line - csv equivalent to column
-        columns = self.check_column_validity(columns)
+        columns = self._check_column_validity(columns)
         self.file.seek(0)
         file_content = self.file.readlines()
         if (max(columns) or len(columns)) >= len(file_content):
@@ -134,8 +134,13 @@ class Data():
 
     def get_maximum_data_index(self,include_header=False):
         return self.max_index_set[self.format](include_header)
+    
+    def is_write_allowed(self):
+        if self.allow_write: return True
+        else: return False
 
     def write(self,tuple_of_values=None):
+        """Input a tuple to save to file"""
         if not self.allow_write:
             raise RuntimeError("Cannot write to file! File must be newly created to allow write!")
         elif not tuple_of_values != tuple:
@@ -145,6 +150,7 @@ class Data():
         self.writer_set[self.format](tuple_of_values)
 
     def read_row(self,row_number,include_header=False):
+        """Reads a row from file and returns it as a tuple object"""
         if self.format == "csv" and not self.init_csv["reader"]:
             self._initialize_read_csv()
         if row_number > self.get_maximum_data_index(include_header):
@@ -305,7 +311,7 @@ class File(Data):
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file, format=self.format, newfile=self.new_file)
 
-open_file = File(open_file=True,handover_path=r"D:\Coding adventures\engine_readout\testing_directory\video-run-2.txt")
+open_file = File(True,)
 
 try:
     for iteration in range(6):
@@ -322,4 +328,4 @@ print(open_file.read_row(0))
 print(open_file.read_row(3))
 print("reading columns")
 columns = [0,1]
-print(open_file.read_column(columns))
+print(open_file.read_column(columns))   
