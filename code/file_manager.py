@@ -310,22 +310,3 @@ class File(Data):
             raise RuntimeError("File not created, cannot initiate Data Class")
         print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
         super().__init__(self.file, format=self.format, newfile=self.new_file)
-
-open_file = File(True,)
-
-try:
-    for iteration in range(6):
-        open_file.write((iteration,iteration*2,iteration*3))
-        print("write n.:",iteration)
-except Exception:   
-    print("Cannot write to file!")
-
-print("header length:",open_file._get_header_length())
-print("max data index without header:",open_file.get_maximum_data_index())
-print("max data index:",open_file.get_maximum_data_index(True))
-print(open_file.read_row((open_file._get_header_length())-1,True))
-print(open_file.read_row(0))
-print(open_file.read_row(3))
-print("reading columns")
-columns = [0,1]
-print(open_file.read_column(columns))   
