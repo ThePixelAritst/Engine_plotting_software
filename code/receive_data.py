@@ -78,10 +78,8 @@ class Data_calculations():
         self.compile_rpm_list()
         self.compile_runtime_list()
         #self.find_missing_points()
-        print(self.list_runtime)
-        print(self.list_rpm)
 
-    def get_all_compiled(self):
+    def get_compiled_data(self):
         return [self.list_runtime,self.list_rpm,self]
 
 data_calculate = Data_calculations()
@@ -144,6 +142,6 @@ class Data_Input():
         
     def output(self):
         data_calculate.compile_data(self.raw_data)
-        return data_calculate.get_all_compiled()#.append(self.raw_data) #[time_list,rpm_list, missing point list - [internal,engine], raw_data - [revolution,micros from last]]
+        return data_calculate.get_compiled_data()#.append(self.raw_data) #[time_list,rpm_list, missing point list - [internal,engine], raw_data - [revolution,micros from last]]
 
 data_receive = Data_Input()

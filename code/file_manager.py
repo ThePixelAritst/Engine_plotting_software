@@ -142,7 +142,7 @@ class Data():
     def write(self,tuple_of_values=None):
         """Input a tuple to save to file"""
         if not self.allow_write:
-            raise RuntimeError("Cannot write to file! File must be newly created to allow write!")
+            raise PermissionError("Cannot write to file! File must be newly created to allow write!")
         elif not tuple_of_values != tuple:
             raise ValueError("Inputed value is not a tuple and thus cannot be writen!")
         elif self.format == "csv" and not self.init_csv["writer"]:
@@ -281,6 +281,7 @@ class File(Data):
         watchdog = 0
         old_name = self.file_name
 
+        print(f"Current filename is '{self.file_name}'")
         while watchdog < genset.MAX_WATCHDOG:
             chosen_name = input("Please input a new name for the file.\n")
             if self._is_valid_filename(chosen_name,self.folder_directory,self.format):
