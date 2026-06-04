@@ -9,10 +9,11 @@ import ast
 import os
 from pathlib import Path
 import numpy as np
+import typing
 import imageio_ffmpeg
 # Program dependencies
-from handle_file import file
 from program_settings import graphing_settings as gs
+import file_manager as fm
 
 
 class Graphing():
@@ -34,25 +35,20 @@ class Graphing():
         self.main_label = "Rotational speed [RPM]"
         self.ax2_stat = ""
         self.axis_length = []
-    
-    def verify_data(self):
-        if self.axis_length[0] != self.axis_length[1]:
-            raise ValueError(f"Invalid data length, X: {self.axis_length[0]}, Y: {self.axis_length[1]}")
+        self.file: fm.File = None
 
-    def set_from_file(self):
-        file_path, returned_data = file.open_and_separate()
-        self.axis_length = ast.literal_eval(returned_data[0])
-        #self.verify_data()
-        self.x_ax1 = ast.literal_eval(returned_data[1]) #X axis data
-        self.y_ax1 = ast.literal_eval(returned_data[2]) #Y axis data
-        self.run_name = os.path.basename(file_path).split(".")[0] #converts the filepath to only show the name of the file to be displayed
+    def read_data_content(self):
+        data = self.file.read_column((0,1))
+        print(data)
+        self.x_ax1 = data[0]
+        self.y_ax1 = data[1]
+        print(self.x_ax1)
+        self.axis_length = len(data[0])
+        self.run_name = self.file.file_name
 
-    def set_from_data(self,set_length,set_x,set_y,name="Not Set"):
-        #self.verify_data()
-        self.x_ax1 = set_x
-        self.y_ax1 = set_y
-        self.axis_length = set_length
-        self.run_name = name
+    def data_handover(self,file_object):
+        self.file = file_object
+        self.read_data_content()
 
     def basic_data_read(self):
         self.float_run_time = round(self.x_ax1[-1],2)
@@ -90,6 +86,7 @@ class Graphing():
                 continue
 
             raw_derivation = self.y_ax1[pointer]-self.y_ax1[pointer-1]
+            print(pointer)
             if self.x_ax1[pointer]-self.x_ax1[pointer-1] != 0:
                 interval_coeficient = 1/(self.x_ax1[pointer]-self.x_ax1[pointer-1])
             else:

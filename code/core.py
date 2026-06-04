@@ -16,7 +16,8 @@ class Main_control():
     def draw_only_initiation(self): # the option to not initiate the program and only draw the graph from existing data directory
         print("Press any key to interrupt startup\n")
         if timeout_action(3.5):
-            graph.set_from_file()
+            file = fm.File(True)
+            graph.data_handover(file)
             self.choose_animation()
         
     def file_initiate_wrapper():
@@ -48,5 +49,7 @@ main.file_rename_prompt()
 
 # Plots the data
 if gs.GENERATE_GRAPH:
-    graph.set_from_data([len(data_output[0]),len(data_output[1])],data_output[0],data_output[1],file.file_name())
+    graph.data_handover(file._get_file_path())
     main.choose_animation()
+else:
+    file._close_file()

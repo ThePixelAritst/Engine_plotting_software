@@ -111,7 +111,7 @@ class Data():
             if not max_length:
                 read_limit = len(literal_list)
             return_dict[current_column] = (literal_list[:read_limit])
-        return return_dict
+        return dict(return_dict)
     
     def _readrow_txt(self,row=0,include_header=False): # reads both lists' values with the same index - csv equivalent to row
         if not self._valid_txt_header():
@@ -143,10 +143,11 @@ class Data():
         """Input a tuple to save to file"""
         if not self.allow_write:
             raise PermissionError("Cannot write to file! File must be newly created to allow write!")
-        elif not tuple_of_values != tuple:
+        if not tuple_of_values != tuple:
             raise ValueError("Inputed value is not a tuple and thus cannot be writen!")
-        elif self.format == "csv" and not self.init_csv["writer"]:
+        if self.format == "csv" and not self.init_csv["writer"]:
             self._initialize_write_csv()
+        self.file.seek(0,2)
         self.writer_set[self.format](tuple_of_values)
 
     def read_row(self,row_number,include_header=False):
@@ -159,7 +160,7 @@ class Data():
         return returned_row
     
     def read_column(self,columns,max_length=None):
-        return self.column_reader_set[self.format](columns,max_length)
+        return dict(self.column_reader_set[self.format](columns,max_length))
 
     # --- CLASS INITIALIZATION ---
 
@@ -176,6 +177,7 @@ class Data():
             if row[0] != denominator:
                 break
             pointer += 1
+        print("Got length")
         return pointer
 
     def _write_header(self):
@@ -183,6 +185,7 @@ class Data():
         self.write(("#","PARSER",genset.VERSION_PARSER))
         self.write(("#","RECEIVER",genset.VERSION_RECEIVER))
         self.write(("#","CREATION_DATE",time.strftime("%Y-%m-%d--%H:%M:%S")))
+        print("Wrote header")
         
 
     def _initialize_txt(self):
@@ -216,7 +219,7 @@ class File(Data):
             if re.search(r'[<>:"/\\|?*]',filename): # or not str(filename).isascii()
                 print("Name cannot contain forbidden characters'")
                 raise ValueError()
-            elif Path.exists(os.path.join(self.folder_directory,f"{filename}.{self.format}")):
+            elif os.path.exists(os.path.join(self.folder_directory,f"{filename}.{self.format}")):
                 print("Cannot rename, File with same name already exists!")
                 raise ValueError()
         except ValueError: return False
@@ -234,7 +237,7 @@ class File(Data):
         self.folder_directory = os.path.join(Path(__file__).resolve().parents[1],folder)
         self.format = "csv"
         self.new_file = True
-        self.full_path = os.path.join(self.folder_directory,f"{self.file_name}.csv")
+        self.full_path = os.path.join(self.folder_directory,f"{self.file_name}.{self.format}")
         self.file = open(self.full_path,"x+",newline='')
 
     def _close_file(self,report_closed=True):
@@ -243,6 +246,9 @@ class File(Data):
         if report_closed:
             print(f"File {self.file_name}.{self.format} was closed.")
 
+    def _get_file_path(self):
+        return self.full_path
+        
     def _open_file(self, handover=None):
         if self.file_open:
             raise RuntimeError("Cannot open secondary file in one class instance!")
@@ -284,7 +290,7 @@ class File(Data):
         print(f"Current filename is '{self.file_name}'")
         while watchdog < genset.MAX_WATCHDOG:
             chosen_name = input("Please input a new name for the file.\n")
-            if self._is_valid_filename(chosen_name,self.folder_directory,self.format):
+            if self._is_valid_filename(chosen_name):
                 self.file_name = chosen_name
                 break
             else:
@@ -303,6 +309,8 @@ class File(Data):
         
     def __init__(self,open_file=True,handover_path=None):
         self.file_open = False
+        if datset.DEBUG_MODE:
+            print(f"WARNING: Debug mode is on, new files will be created in {datset.DEBUG_DIRECTORY}")
         if open_file: 
             self._open_file(handover=handover_path)
         else:
