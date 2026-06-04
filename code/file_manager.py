@@ -55,13 +55,16 @@ class Data():
     def _write_csv(self,row_content):
         self.csv_writer.writerow(row_content)
 
-    def _readrow_csv(self,row_number,include_header=False):
+    def _readrow_csv(self,row_number,include_header=False,return_float=True):
         if not include_header:
             row_number += self.header_length
         self.file.seek(0)
         row = list(self.csv_reader)[row_number]
         self.file.seek(0)
-        return tuple(row)
+        if return_float:
+            return tuple(map(float,row))
+        else:
+            return tuple(row)
     
     def _readcolumns_csv(self,selected_collumns,max_length=None):
         # reads the selected column without header
@@ -118,7 +121,7 @@ class Data():
             return_dict[current_column-self.header_length] = (literal_list[:read_limit])
         return dict(return_dict)
     
-    def _readrow_txt(self,row=0,include_header=False): # reads both lists' values with the same index - csv equivalent to row
+    def _readrow_txt(self,row=0,include_header=False,return_float=True): # reads both lists' values with the same index - csv equivalent to row
         if not self._valid_txt_header():
             raise ValueError("Unknown '.txt' file data format!")
         self.file.seek(0)
@@ -131,7 +134,10 @@ class Data():
         data = self.read_column(desired_rows)
         for current_item in data:
             returning_row.append(data[current_item][row])
-        return tuple(returning_row)
+        if return_float:
+            return tuple(map(float,returning_row))
+        else:
+            return tuple(returning_row)
             
 
     # --- VISIBLE AND ACCESSIBLE METHODS ---
@@ -155,16 +161,16 @@ class Data():
         self.file.seek(0,2)
         self.writer_set[self.format](tuple_of_values)
 
-    def read_row(self,row_number,include_header=False):
+    def read_row(self,row_number,include_header=False,return_as_float=True):
         """Reads a row from file and returns it as a tuple object"""
         if self.format == "csv" and not self.init_csv["reader"]:
             self._initialize_read_csv()
         if row_number > self.get_maximum_data_index(include_header):
             raise IndexError("Cannot access Index outside of file!")
-        returned_row = self.row_reader_set[self.format](row_number,include_header)
+        returned_row = self.row_reader_set[self.format](row_number,include_header,return_as_float)
         return returned_row
     
-    def read_column(self,columns,max_length=None):
+    def read_column(self,columns=(0,1),max_length=None):
         return dict(self.column_reader_set[self.format](columns,max_length))
 
     # --- CLASS INITIALIZATION ---
@@ -175,7 +181,7 @@ class Data():
         pointer = 0
         while True:
             try:
-                row = self.read_row(pointer,include_header=True)
+                row = self.read_row(pointer,include_header=True,return_as_float=False)
 
             except IndexError:
                 break
@@ -280,7 +286,7 @@ class File(Data):
         self.folder_directory = Path(self.full_path).resolve().parent
         self.new_file = False
         if self.format == "txt":
-            print(f"\nWARNING: opening a 'txt' format file. This is no longer a supported format. Please convert this file to '{datset.DEFAULT_FORMAT}' file format!\n")
+            print(f"WARNING: opening a 'txt' format file. This is no longer a supported format. Please convert this file to '{datset.DEFAULT_FORMAT}' file format!")
             open_mode = "r"
         else:
             open_mode = "a+"
@@ -313,7 +319,7 @@ class File(Data):
     def __init__(self,open_file=True,handover_path=None):
         self.file_open = False
         if datset.DEBUG_MODE:
-            print(f"\nWARNING: Debug mode is on, new files will be created in {datset.DEBUG_DIRECTORY}!\n")
+            print(f"WARNING: Debug mode is on, new files will be created in {datset.DEBUG_DIRECTORY}!")
         if open_file: 
             self._open_file(handover=handover_path)
         else:

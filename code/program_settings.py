@@ -3,6 +3,7 @@ class general_settings():
     VERSION_SOFTWARE = "X2.0"
     VERSION_PARSER = "X2.0"
     VERSION_RECEIVER = "1.1"
+    NAME = "Engine Plotting Software"
 
 
 class data_settings():

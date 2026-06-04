@@ -13,13 +13,15 @@ import typing
 import imageio_ffmpeg
 # Program dependencies
 from program_settings import graphing_settings as gs
+from program_settings import general_settings as genset
 import file_manager as fm
 
 
 class Graphing():
     def __init__(self):
+        self.run_name = None
         plt.rcParams["animation.ffmpeg_path"] = imageio_ffmpeg.get_ffmpeg_exe()
-        self.fig = plt.figure(num="Main Figure",figsize=[gs.SIZE_X,gs.SIZE_Y],layout="constrained")
+        self.fig = plt.figure(num=genset.NAME,figsize=[gs.SIZE_X,gs.SIZE_Y],layout="constrained")
         if gs.STAT_TEXT:
             self.ax1 = self.fig.add_subplot(1,gs.COLLUMN_NUMBER,(1,gs.GRAPH_COLLUMNS))
         else:
@@ -30,7 +32,6 @@ class Graphing():
         self.y_ax1=[]
         self.y_ax2 = []
         self.secondary = []
-        self.run_name = None
         self.secondary_label = ""
         self.main_label = "Rotational speed [RPM]"
         self.ax2_stat = ""

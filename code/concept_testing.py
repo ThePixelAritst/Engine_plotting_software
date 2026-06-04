@@ -1,1 +1,1 @@
-import socket
+print("stinky")

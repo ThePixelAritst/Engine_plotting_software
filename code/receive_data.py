@@ -142,6 +142,6 @@ class Data_Input():
         
     def output(self):
         data_calculate.compile_data(self.raw_data)
-        return data_calculate.get_compiled_data()#.append(self.raw_data) #[time_list,rpm_list, missing point list - [internal,engine], raw_data - [revolution,micros from last]]
+        return data_calculate.get_compiled_data() #[time_list,rpm_list, missing point list - [internal,engine], raw_data - [revolution,micros from last]]
 
 data_receive = Data_Input()
