@@ -11,7 +11,7 @@ class Main_control():
         if not gs.ANIMATE:
             graph.draw_static()
         else:
-            graph.animate(gs.FRAME_RATE)
+            graph.animate()
 
     def draw_only_initiation(self): # the option to not initiate the program and only draw the graph from existing data directory
         print("Press any key to interrupt startup\n")
@@ -19,6 +19,7 @@ class Main_control():
             file = fm.File(True)
             graph.data_handover(file)
             self.choose_animation()
+            exit()
         
     def file_initiate_wrapper():
         global file

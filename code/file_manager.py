@@ -68,7 +68,7 @@ class Data():
         self.file.seek(0)
         selected_collumns = self._check_column_validity(selected_collumns)
         if (max(selected_collumns) or len(selected_collumns)) >= len(self.read_row(0)):
-            raise IndexError(f"Requested column index outside row margins")
+            raise IndexError(f"Requested column index outside row margins!")
             
         if not max_length or int(max_length) > len(list(self.csv_reader))-self.header_length:
             max_length = self.get_maximum_data_index() + 1
@@ -102,26 +102,31 @@ class Data():
         columns = self._check_column_validity(columns)
         self.file.seek(0)
         file_content = self.file.readlines()
-        if (max(columns) or len(columns)) >= len(file_content):
-            raise IndexError(f"Requested column index outside row margins")
+        read_from_collums = []
+
+        for column in columns:
+            read_from_collums.append(column + self.header_length)
+        if (max(read_from_collums) or len(read_from_collums)) >= len(file_content):
+            raise IndexError(f"Requested column index outside row margins!")
+        
         read_limit = max_length
         return_dict = {col: [] for col in columns}
-        for current_column in columns:
+        for current_column in read_from_collums:
             literal_list = ast.literal_eval(file_content[current_column])
             if not max_length:
                 read_limit = len(literal_list)
-            return_dict[current_column] = (literal_list[:read_limit])
+            return_dict[current_column-self.header_length] = (literal_list[:read_limit])
         return dict(return_dict)
     
     def _readrow_txt(self,row=0,include_header=False): # reads both lists' values with the same index - csv equivalent to row
         if not self._valid_txt_header():
-            raise ValueError("unknown '.txt' file data format!")
+            raise ValueError("Unknown '.txt' file data format!")
         self.file.seek(0)
         file_content = self.file.readlines()
         header = ast.literal_eval(file_content[0])
         if include_header:
             return tuple(header)
-        desired_rows = (1,2)
+        desired_rows = (0,1)
         returning_row = []
         data = self.read_column(desired_rows)
         for current_item in data:
@@ -177,7 +182,6 @@ class Data():
             if row[0] != denominator:
                 break
             pointer += 1
-        print("Got length")
         return pointer
 
     def _write_header(self):
@@ -185,7 +189,6 @@ class Data():
         self.write(("#","PARSER",genset.VERSION_PARSER))
         self.write(("#","RECEIVER",genset.VERSION_RECEIVER))
         self.write(("#","CREATION_DATE",time.strftime("%Y-%m-%d--%H:%M:%S")))
-        print("Wrote header")
         
 
     def _initialize_txt(self):
@@ -193,7 +196,7 @@ class Data():
     
     def __init__(self,opened_file: typing.TextIO,format,newfile):
         if opened_file is None or opened_file.closed:
-            raise ValueError(f"Expected an open file object, got: {opened_file!r}!")
+            raise ValueError(f"Expected an open file object, got: {opened_file!r}, with type: {type(opened_file)}!")
         self.file = opened_file
         self.format = format
         self._initialize_function_dispatch()
@@ -217,7 +220,7 @@ class File(Data):
     def _is_valid_filename(self,filename):
         try:
             if re.search(r'[<>:"/\\|?*]',filename): # or not str(filename).isascii()
-                print("Name cannot contain forbidden characters'")
+                print("Name cannot contain forbidden characters!'")
                 raise ValueError()
             elif os.path.exists(os.path.join(self.folder_directory,f"{filename}.{self.format}")):
                 print("Cannot rename, File with same name already exists!")
@@ -227,7 +230,7 @@ class File(Data):
 
     def _create_file(self): #creates file
         if self.file_open:
-            raise RuntimeError("Cannot create secondary file in one class instance'")
+            raise RuntimeError("Cannot create secondary file in one class instance!")
         self.file_open = True
         self.file_name = time.strftime("%Y-%m-%d--%a--%H-%M-%S")
         if datset.DEBUG_MODE:
@@ -258,7 +261,7 @@ class File(Data):
             attempt = 0
             while attempt < genset.MAX_WATCHDOG:
                 try:
-                    unconfirmed_path = input("Please input file to be opened:\n")
+                    unconfirmed_path = input("Please input path of file to open:\n")
                     if not(Path(unconfirmed_path).exists() and Path(unconfirmed_path).is_file()):
                         raise ValueError()
                     else:
@@ -266,10 +269,10 @@ class File(Data):
                         break
                 except Exception:
                     attempt += 1
-                    print(f"\nInvalid or unreadable file. Attempt {attempt}/{genset.MAX_WATCHDOG}")
+                    print(f"\nInvalid or unreadable file. Attempt {attempt}/{genset.MAX_WATCHDOG}!")
                 finally:
                     if attempt >= genset.MAX_WATCHDOG:
-                        exit("Watchdog exceeded, terminating program.\n\n")
+                        exit("Watchdog exceeded, terminating program!\n\n")
 
         full_name = (os.path.basename(self.full_path).split()[-1]).split(".")                
         self.format = full_name[-1]
@@ -277,7 +280,7 @@ class File(Data):
         self.folder_directory = Path(self.full_path).resolve().parent
         self.new_file = False
         if self.format == "txt":
-            print(f"WARNING: opening a 'txt' format file. This is no longer a supported format. Please convert this file to '{datset.DEFAULT_FORMAT}' file format")
+            print(f"\nWARNING: opening a 'txt' format file. This is no longer a supported format. Please convert this file to '{datset.DEFAULT_FORMAT}' file format!\n")
             open_mode = "r"
         else:
             open_mode = "a+"
@@ -305,17 +308,17 @@ class File(Data):
         self.full_path = new_file_path
         self.file_name = chosen_name
         self._open_file(handover=self.full_path)
-        print(f"Renamed '{old_name}.{self.format}' to '{chosen_name}.{self.format}'")         
+        print(f"Renamed '{old_name}.{self.format}' to '{chosen_name}.{self.format}'.")         
         
     def __init__(self,open_file=True,handover_path=None):
         self.file_open = False
         if datset.DEBUG_MODE:
-            print(f"WARNING: Debug mode is on, new files will be created in {datset.DEBUG_DIRECTORY}")
+            print(f"\nWARNING: Debug mode is on, new files will be created in {datset.DEBUG_DIRECTORY}!\n")
         if open_file: 
             self._open_file(handover=handover_path)
         else:
             self._create_file()
         if not hasattr(self, 'file') or self.file is None:
-            raise RuntimeError("File not created, cannot initiate Data Class")
-        print(f"File '{self.file_name}.{self.format}' was initiated successfully.\n")
+            raise RuntimeError("File not created, cannot initiate Data Class!")
+        print(f"File '{self.file_name}.{self.format}' was initiated successfully.")
         super().__init__(self.file, format=self.format, newfile=self.new_file)

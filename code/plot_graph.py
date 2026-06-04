@@ -39,10 +39,8 @@ class Graphing():
 
     def read_data_content(self):
         data = self.file.read_column((0,1))
-        print(data)
         self.x_ax1 = data[0]
         self.y_ax1 = data[1]
-        print(self.x_ax1)
         self.axis_length = len(data[0])
         self.run_name = self.file.file_name
 
@@ -86,7 +84,6 @@ class Graphing():
                 continue
 
             raw_derivation = self.y_ax1[pointer]-self.y_ax1[pointer-1]
-            print(pointer)
             if self.x_ax1[pointer]-self.x_ax1[pointer-1] != 0:
                 interval_coeficient = 1/(self.x_ax1[pointer]-self.x_ax1[pointer-1])
             else:
@@ -251,10 +248,10 @@ class Graphing():
         # set text
         #self.debug_text.set_text(f"Frame: {frame_number}\nFrame count: {len(self.x_ax1)}")
         self.statistics.set_text(f"Cur. Speed: {self.y_ax1[frame_number-1]} RPM\nCur. Accl.: {self.y_ax2[frame_number-1]} RPM/s\n{self.full_stat_text}\nCur. Frame: {frame_number}")
-        print(frame_number)
+        print(f"Currently generating frame: {frame_number}")
         return(self.main,self.secondary,self.statistics)
 
-    def animate(self,frame_rate):
+    def animate(self):
         print("Generating animation")
         LIMIT_RESERVE = 1.1
         self.set_common()

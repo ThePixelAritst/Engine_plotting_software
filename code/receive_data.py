@@ -1,5 +1,6 @@
 import socket
 from keyboard_controller import detect_keystroke,clear_keyboard_buffer
+from program_settings import data_settings as datset
 
 class Data_calculations():
     def __init__(self):
@@ -92,7 +93,6 @@ class Data_Input():
         UDP_IP = "0.0.0.0"
         UDP_PORT = 5005
         TIMEOUT = 2
-        self.LIVE_TELEMETRY = 1 # 1 = Partial Telemetry (RPM, points), 2 = Full Telemetry (RPM, Time, points)
 
         # Connection setup
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -123,9 +123,9 @@ class Data_Input():
                 self.timeout_number = 0
                 self.raw_data.append(partial_undecoded.decode().split()) #returns the decoded data in a list form [Current period n, Period of last turn in microsecs]
                 
-                if self.LIVE_TELEMETRY == 1:
+                if datset.TELEMETRY_SETTING == 1:
                     print(f"{data_calculate.get_rpm(-1,precision=2,ignore_set_data=True,full_packet=self.raw_data)} RPM\nPoints: {self.period_number}\n")
-                elif self.LIVE_TELEMETRY == 2:
+                elif datset.TELEMETRY_SETTING == 2:
                     data_calculate.increase_total_runtime(-1,True,self.raw_data)
                     run_time = data_calculate.get_total_runtime()
                     print("Data Receive Success")
@@ -133,12 +133,12 @@ class Data_Input():
 
                 self.period_number += 1
 
-            except:
-                print(f"DATA RECEIVE TIMEOUT. Attempt: {self.timeout_number}")
+            except Exception:
+                print(f"DATA RECEIVE TIMEOUT! Attempt: {self.timeout_number}")
                 self.timeout_number += 1
                 continue
         
-        print("Listening stopped")
+        print("Listening stopped.")
         
     def output(self):
         data_calculate.compile_data(self.raw_data)

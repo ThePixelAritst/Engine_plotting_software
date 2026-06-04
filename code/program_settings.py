@@ -12,6 +12,7 @@ class data_settings():
     INVALID_CHARACTERS = r'<>:"/\|?*'
     CSV_DELIMITER = ","
     DEBUG_MODE = True
+    TELEMETRY_SETTING = 1 # 1 = Partial Telemetry (RPM, points), 2 = Full Telemetry (RPM, Time, points)
 
 
     
@@ -42,7 +43,4 @@ class graphing_settings():
     AX1_COLOR = "black" # color of main (rpm) line
     AX2_COLOR = "#237fd4" # color of secondary line
     AX1_LINE = 2.5 # linewidth of the main (rpm) line
-
-    # Animation settings
-    FRAME_RATE = 12
     
