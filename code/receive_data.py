@@ -74,7 +74,6 @@ class Data_calculations():
                 internal_pointer = missing_point
                 
     def compile_data(self,get_data):
-        print("Compiling data")
         self.set_input_data(get_data)
         self.compile_rpm_list()
         self.compile_runtime_list()
@@ -106,9 +105,9 @@ class Data_Input():
 
     def listen(self):
         # Initiation
-        print("Initiation, Clearing keyboard buffer")
+        print("Initiating listening for engine data over WiFi.")
         clear_keyboard_buffer()
-        print("Listening, press any key to stop")
+        print("Listening started, press ENTER to stop.")
 
         # Actual listening loop
         while True:
@@ -128,13 +127,13 @@ class Data_Input():
                 elif datset.TELEMETRY_SETTING == 2:
                     data_calculate.increase_total_runtime(-1,True,self.raw_data)
                     run_time = data_calculate.get_total_runtime()
-                    print("Data Receive Success")
+                    print("Data Receive Success.")
                     print(f"{data_calculate.get_rpm(-1,ignore_set_data=True,full_packet=self.raw_data)} RPM\n{run_time} sec\n{self.period_number} points\n")
 
                 self.period_number += 1
 
             except Exception:
-                print(f"DATA RECEIVE TIMEOUT! Attempt: {self.timeout_number}")
+                print(f"NO DATA RECEIVED! Attempt: {self.timeout_number}.\n Press ENTER to stop.")
                 self.timeout_number += 1
                 continue
         

@@ -7,6 +7,7 @@ from pathlib import Path
 import csv
 import ast
 # internal imports
+import keyboard_controller as keco
 import program_settings as sett
 datset = sett.data_settings
 genset = sett.general_settings
@@ -270,17 +271,20 @@ class File(Data):
                     unconfirmed_path = input("Please input path of file to open:\n")
                     if not(Path(unconfirmed_path).exists() and Path(unconfirmed_path).is_file()):
                         raise ValueError()
-                    else:
-                        self.full_path = unconfirmed_path
-                        break
-                except Exception:
+                    full_name = (os.path.basename(unconfirmed_path).split()[-1]).split(".")
+                    if full_name[-1] != ("txt"):
+                        print(f"'{full_name[-1]}' is not a supported data file format!")
+                        raise ValueError()
+                    self.full_path = unconfirmed_path
+                        
+                except ValueError:
                     attempt += 1
-                    print(f"\nInvalid or unreadable file. Attempt {attempt}/{genset.MAX_WATCHDOG}!")
+                    print(f"Invalid or unreadable file. Attempt {attempt}/{genset.MAX_WATCHDOG}!\n")
                 finally:
                     if attempt >= genset.MAX_WATCHDOG:
                         exit("Watchdog exceeded, terminating program!\n\n")
 
-        full_name = (os.path.basename(self.full_path).split()[-1]).split(".")                
+        full_name = (os.path.basename(self.full_path).split()[-1]).split(".")         
         self.format = full_name[-1]
         self.file_name = full_name[0]
         self.folder_directory = Path(self.full_path).resolve().parent
@@ -314,7 +318,12 @@ class File(Data):
         self.full_path = new_file_path
         self.file_name = chosen_name
         self._open_file(handover=self.full_path)
-        print(f"Renamed '{old_name}.{self.format}' to '{chosen_name}.{self.format}'.")         
+        print(f"Renamed '{old_name}.{self.format}' to '{chosen_name}.{self.format}'.")
+
+    def ask_rename(self):
+        print("Press ENTER to rename newly created file.\n")
+        if keco.timeout_action(3.5):
+            self.rename()        
         
     def __init__(self,open_file=True,handover_path=None):
         self.file_open = False

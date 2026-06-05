@@ -14,9 +14,9 @@ class Main_control():
             graph.animate()
 
     def draw_only_initiation(self): # the option to not initiate the program and only draw the graph from existing data directory
-        print("Press any key to interrupt startup\n")
+        print("Press ENTER to interrupt startup.\n")
         if timeout_action(3.5):
-            print("Startup interrupted")
+            print("Startup interrupted.")
             file = fm.File(True)
             graph.data_handover(file)
             self.choose_animation()
@@ -25,21 +25,21 @@ class Main_control():
     def file_initiate_wrapper(self):
         global file
         file = fm.File(False)
-
-    def file_rename_prompt(self):
-        print("Press any key to rename newly created file\n")
-        if timeout_action(3):
-            file.rename()
     
-    def save_all(self):
+    def save_to_file(self):
+        print("Saving data to file.")
         data = rx.output()
-        for index in range(len(rx.output()[0])):
-            file.write((data[0][index],data[1][index]))
+        if not len(data[1]):
+            exit("No data collected, exiting program without saving.\n")
+        else:
+            self.file_initiate_wrapper()
+            for index in range(len(data[0])):
+                file.write((data[0][index],data[1][index]))
 
     def imitate_receive(self):
         print("Imitating receive!!!!!")
-        fake_file = fm.File(True,handover_path=r"D:\Coding adventures\engine_readout\data\video-run-2.txt")
-        
+        self.file_initiate_wrapper()
+        fake_file = fm.File(True,handover_path=r"/home/pixel/Documents/coding/Engine plotting software/data/video-run-2.txt")
         fake_data = fake_file.read_column()
         for index in range(len(fake_data[0])):
             file.write((fake_data[0][index],fake_data[1][index]))
@@ -52,10 +52,9 @@ main.draw_only_initiation()
 # Listens for data and outputs them
 rx.listen()
 # Saves data to a file 
-main.file_initiate_wrapper()
-main.save_all()
+main.save_to_file()
 #main.imitate_receive()
-main.file_rename_prompt()
+file.ask_rename()
 
 # Plots the data
 if gs.GENERATE_GRAPH:
