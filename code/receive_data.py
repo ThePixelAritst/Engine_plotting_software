@@ -132,7 +132,7 @@ class Data_Input():
 
                 self.period_number += 1
 
-            except Exception:
+            except TimeoutError:
                 print(f"NO DATA RECEIVED! Attempt: {self.timeout_number}.\n Press ENTER to stop.")
                 self.timeout_number += 1
                 continue

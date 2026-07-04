@@ -130,7 +130,7 @@ class Data():
         header = ast.literal_eval(file_content[0])
         if include_header:
             return tuple(header)
-        desired_rows = (0,1)
+        desired_rows = (0,1) # the rows it reads are hard set due to the nature .txt data formatting
         returning_row = []
         data = self.read_column(desired_rows)
         for current_item in data:
@@ -152,7 +152,7 @@ class Data():
         else: return False
 
     def write(self,tuple_of_values=None):
-        """Input a tuple to save to file"""
+        """Input a tuple to save to file. Each tuple value is one collumn"""
         if not self.allow_write:
             raise PermissionError("Cannot write to file! File must be newly created to allow write!")
         if not tuple_of_values != tuple:
@@ -183,19 +183,19 @@ class Data():
         while True:
             try:
                 row = self.read_row(pointer,include_header=True,return_as_float=False)
-
-            except IndexError:
+            except IndexError: # if the file is only header lines, it would otherwise go out of range
                 break
-            if row[0] != denominator:
+            if row[0] != denominator: # denominator - sign at the start of every header line
                 break
             pointer += 1
         return pointer
 
-    def _write_header(self):
+    def _write_header(self): # outputs header, which is present at the start of every newly created file
         self.write(("#","SOFTWARE",genset.VERSION_SOFTWARE))
         self.write(("#","PARSER",genset.VERSION_PARSER))
         self.write(("#","RECEIVER",genset.VERSION_RECEIVER))
-        self.write(("#","CREATION_DATE",time.strftime("%Y-%m-%d--%H:%M:%S")))
+        self.write(("#","CREATION_DATE",time.strftime("%Y/%m/%d--%H:%M:%S"),"YYYY/MM/DD--HH:MM:SS"))
+        self.write(("#","RPM","TIME"))
         
 
     def _initialize_txt(self):
@@ -328,7 +328,7 @@ class File(Data):
     def __init__(self,open_file=True,handover_path=None):
         self.file_open = False
         if datset.DEBUG_MODE:
-            print(f"WARNING: Debug mode is on, new files will be created in {datset.DEBUG_DIRECTORY}!")
+            print(f"DEBUG: debug mode is on, new files will be created in {datset.DEBUG_DIRECTORY}!")
         if open_file: 
             self._open_file(handover=handover_path)
         else:

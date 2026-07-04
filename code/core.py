@@ -7,7 +7,7 @@ from program_settings import graphing_settings as gs
 # Setup of the main functions:
 
 class Main_control():
-    def choose_animation(self):
+    def choose_animation(self): #calls either static draw call or an animation call
         if not gs.ANIMATE:
             graph.draw_static()
         else:
@@ -17,8 +17,8 @@ class Main_control():
         print("Press ENTER to interrupt startup.\n")
         if timeout_action(3.5):
             print("Startup interrupted.")
-            file = fm.File(True)
-            graph.data_handover(file)
+            file = fm.File(True) #opens a file at chosen directory
+            graph.data_handover(file) # hands data over to graphing engine
             self.choose_animation()
             exit()
         
@@ -36,10 +36,10 @@ class Main_control():
             for index in range(len(data[0])):
                 file.write((data[0][index],data[1][index]))
 
-    def imitate_receive(self):
-        print("Imitating receive!!!!!")
+    def imitate_receive(self): # only for testing purposes, opens a prelected file and acts as listening engine
+        print("DEBUG: Imitating receive")
         self.file_initiate_wrapper()
-        fake_file = fm.File(True,handover_path=r"/home/pixel/Documents/coding/Engine plotting software/data/video-run-2.txt")
+        fake_file = fm.File(True,handover_path=r"D:\Coding adventures\engine_readout\data\video-run-2.txt")
         fake_data = fake_file.read_column()
         for index in range(len(fake_data[0])):
             file.write((fake_data[0][index],fake_data[1][index]))

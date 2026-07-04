@@ -5,11 +5,9 @@ import matplotlib.animation as anim
 from matplotlib.ticker import AutoMinorLocator
 # python libraries
 import math
-import ast
 import os
 from pathlib import Path
 import numpy as np
-import typing
 import imageio_ffmpeg
 # Program dependencies
 from program_settings import graphing_settings as gs
@@ -155,7 +153,7 @@ class Graphing():
         self.calculate_derivation()
         self.basic_data_read()
 
-        self.ax1.set_title(f"Analysis of: {self.run_name}",size=gs.TITLE_SIZE)
+        self.ax1.set_title(f"Displaying: {self.run_name}",size=gs.TITLE_SIZE)
 
         self.ax1.set_xlabel("Time [second]",size=gs.LABEL_SIZE)
         self.ax1.set_ylabel(self.main_label,size=gs.LABEL_SIZE)
