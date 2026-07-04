@@ -1,7 +1,7 @@
 class general_settings():
     MAX_WATCHDOG = 5
-    VERSION_SOFTWARE = "X2.0"
-    VERSION_PARSER = "X2.0"
+    VERSION_SOFTWARE = "2.0"
+    VERSION_PARSER = "2.0"
     VERSION_RECEIVER = "1.1"
     NAME = "Engine Plotting Software"
 
